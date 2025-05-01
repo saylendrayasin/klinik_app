@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 export function useAuth() {
   const router = useRouter();
 
-  const signIn = async ({ username, password }) => {
+  const signIn = async ({ username, password, rememberMe = false }) => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, rememberMe }),
       });
 
       const data = await res.json();
