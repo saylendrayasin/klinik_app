@@ -157,7 +157,7 @@ export default function DashboardPatientDetailPage() {
       {/* Form Edit Pasien */}
       <form
         onSubmit={handleUpdatePatient}
-        className="space-y-6 bg-white rounded-md shadow-md"
+        className="space-y-6 bg-white rounded-md shadow-md p-4"
       >
         <h1 className="text-2xl font-bold mb-6">Edit Data Pasien</h1>
 
@@ -189,7 +189,7 @@ export default function DashboardPatientDetailPage() {
             value={form.dateOfBirth}
             onChange={handleInputChange}
             required
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
@@ -248,7 +248,7 @@ export default function DashboardPatientDetailPage() {
           <h2 className="text-xl font-semibold">Daftar Kunjungan</h2>
           <button
             onClick={handleOpenAddVisit}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-xm text-white px-4 py-2 rounded-md"
           >
             <FaPlus /> Tambah Kunjungan
           </button>
@@ -291,14 +291,6 @@ export default function DashboardPatientDetailPage() {
         </div>
       </div>
 
-      <VisitModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleSubmitVisit}
-        initialData={initialVisitData}
-        mode={modalMode}
-      />
-
       <div className="flex justify-center mt-8">
         <button
           onClick={() => router.push("/dashboard/patients")}
@@ -307,6 +299,13 @@ export default function DashboardPatientDetailPage() {
           <FaArrowLeft /> Kembali
         </button>
       </div>
+      <VisitModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleSubmitVisit}
+        initialData={initialVisitData}
+        mode={modalMode}
+      />
     </div>
   );
 }

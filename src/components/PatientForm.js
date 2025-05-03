@@ -72,7 +72,7 @@ export default function PatientForm() {
             type="date"
             value={form.dateOfBirth}
             onChange={handleChange}
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
         </div>
