@@ -23,18 +23,18 @@ export async function middleware(request) {
   const path = request.nextUrl.pathname;
 
   // 1. Special handling for "/" root route
-  // if (path === "/") {
-  //   if (token) {
-  //     try {
-  //       await jwtVerify(token, secretKey);
-  //       return NextResponse.redirect(new URL("/dashboard", request.url));
-  //     } catch (error) {
-  //       return NextResponse.redirect(new URL("/login", request.url));
-  //     }
-  //   } else {
-  //     return NextResponse.redirect(new URL("/login", request.url));
-  //   }
-  // }
+  if (path === "/") {
+    if (token) {
+      try {
+        await jwtVerify(token, secretKey);
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      } catch (error) {
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+    } else {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
 
   // 2. Allow free access to public paths
   if (isPublicPath(path)) {
