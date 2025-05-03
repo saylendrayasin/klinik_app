@@ -36,7 +36,7 @@ export default function PatientForm() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-md shadow-md">
+    <div className="max-w-3xl mx-auto bg-white rounded-md shadow-md p-4">
       <h2 className="text-2xl font-bold text-center mb-8">
         Tambah Pasien Baru
       </h2>

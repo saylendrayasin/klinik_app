@@ -76,7 +76,10 @@ export default function DashboardLayout({ children }) {
           <button onClick={() => setSidebarOpen(true)}>
             <FaBars size={24} className="text-gray-600" />
           </button>
-          <h1 className="text-lg font-bold text-blue-700">Dashboard</h1>
+          <h1 className="text-lg font-bold text-blue-700">
+            {navItems.find((item) => item.href === pathname)?.label ||
+              "Dashboard"}
+          </h1>
 
           {/* Logout Button Mobile */}
           <button
