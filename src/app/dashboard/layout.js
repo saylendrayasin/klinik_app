@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }) {
         } transition-transform duration-200 ease-in-out sm:translate-x-0 sm:static sm:inset-0 flex flex-col`}
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-4 border-b">
           <h1 className="text-2xl font-bold text-blue-700">Klinik App</h1>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -36,12 +36,12 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Sidebar Menu */}
-        <nav className="flex-1 flex flex-col p-4 space-y-2">
+        <nav className="flex-1 flex flex-col p-2 space-y-2">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`block px-2 py-2 rounded-lg font-medium transition-colors ${
                 (item.href === "/dashboard" && pathname === "/dashboard") ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
                   ? "bg-blue-600 text-white"
@@ -55,13 +55,13 @@ export default function DashboardLayout({ children }) {
         </nav>
 
         {/* Sidebar Logout */}
-        <div className="p-4 border-t">
+        <div className="p-2 border-t">
           <button
             onClick={() => {
               setSidebarOpen(false);
               signOut();
             }}
-            className="flex items-center gap-2 w-full px-4 py-2 rounded-lg font-medium text-red-600 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 w-full px-2 py-2 rounded-lg font-medium text-red-600 hover:bg-gray-100 transition-colors"
           >
             <FaSignOutAlt />
             <span>Logout</span>
@@ -77,8 +77,11 @@ export default function DashboardLayout({ children }) {
             <FaBars size={24} className="text-gray-600" />
           </button>
           <h1 className="text-lg font-bold text-blue-700">
-            {navItems.find((item) => item.href === pathname)?.label ||
-              "Dashboard"}
+            {navItems.find(
+              (item) =>
+                (item.href === "/dashboard" && pathname === "/dashboard") ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href))
+            )?.label || "Dashboard"}
           </h1>
 
           {/* Logout Button Mobile */}
