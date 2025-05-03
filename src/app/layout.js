@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Klinik App",
-  description: "Aplikasi Klinik Modern",
+  description: "Aplikasi Klinik",
   generator: "Next.js",
   manifest: "/manifest.json",
   keywords: ["klinik", "pwa", "nextjs"],
@@ -17,7 +17,6 @@ export const metadata = {
   authors: [
     {
       name: "Saylendra Yasin",
-      url: "https://example.com",
     },
   ],
   viewport:
