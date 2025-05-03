@@ -79,6 +79,17 @@ export default function VisitModal({
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Diagnosis */}
+              <div className="flex flex-col">
+                <label className="font-semibold text-gray-700 mb-1">
+                  Diagnosis Kunjungan
+                </label>
+                <DiagnosisSelect
+                  value={form.visitDiagnosis}
+                  onChange={handleDiagnosisChange}
+                />
+              </div>
+
               {/* Tanggal */}
               <div className="flex flex-col">
                 <label
@@ -134,17 +145,6 @@ export default function VisitModal({
                   placeholder="Masukkan nama obat..."
                   rows="3"
                   className="p-2 border rounded-md resize-none"
-                />
-              </div>
-
-              {/* Diagnosis */}
-              <div className="flex flex-col">
-                <label className="font-semibold text-gray-700 mb-1">
-                  Diagnosis Kunjungan
-                </label>
-                <DiagnosisSelect
-                  value={form.visitDiagnosis}
-                  onChange={handleDiagnosisChange}
                 />
               </div>
 
