@@ -36,7 +36,7 @@ export default function PatientForm() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-8 rounded-md shadow-md">
+    <div className="max-w-3xl mx-auto bg-white rounded-md shadow-md">
       <h2 className="text-2xl font-bold text-center mb-8">
         Tambah Pasien Baru
       </h2>
@@ -53,7 +53,7 @@ export default function PatientForm() {
             value={form.name}
             onChange={handleChange}
             placeholder="Masukkan nama pasien"
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
         </div>
@@ -72,7 +72,7 @@ export default function PatientForm() {
             type="date"
             value={form.dateOfBirth}
             onChange={handleChange}
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
         </div>
@@ -88,7 +88,7 @@ export default function PatientForm() {
             value={form.address}
             onChange={handleChange}
             placeholder="Masukkan alamat"
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
@@ -102,7 +102,7 @@ export default function PatientForm() {
             name="gender"
             value={form.gender}
             onChange={handleChange}
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             <option value="Male">Laki-laki</option>
             <option value="Female">Perempuan</option>
@@ -114,14 +114,14 @@ export default function PatientForm() {
           <button
             type="button"
             onClick={handleBack}
-            className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-md transition"
+            className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-md transition"
           >
             Kembali
           </button>
 
           <button
             type="submit"
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md transition"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md transition"
           >
             Simpan Pasien
           </button>

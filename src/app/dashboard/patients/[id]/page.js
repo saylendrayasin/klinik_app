@@ -136,14 +136,14 @@ export default function DashboardPatientDetailPage() {
 
   if (!patient) {
     return (
-      <div className="p-6 text-center text-gray-500">
+      <div className="text-center text-gray-500">
         Data pasien tidak ditemukan.
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-10">
+    <div className="max-w-4xl mx-auto space-y-10">
       {/* Tombol kembali */}
       <div className="flex justify-start mb-2">
         <button
@@ -157,7 +157,7 @@ export default function DashboardPatientDetailPage() {
       {/* Form Edit Pasien */}
       <form
         onSubmit={handleUpdatePatient}
-        className="space-y-6 bg-white p-6 rounded-md shadow-md"
+        className="space-y-6 bg-white rounded-md shadow-md"
       >
         <h1 className="text-2xl font-bold mb-6">Edit Data Pasien</h1>
 
@@ -171,7 +171,7 @@ export default function DashboardPatientDetailPage() {
             value={form.name}
             onChange={handleInputChange}
             required
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
@@ -189,7 +189,7 @@ export default function DashboardPatientDetailPage() {
             value={form.dateOfBirth}
             onChange={handleInputChange}
             required
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
@@ -202,7 +202,7 @@ export default function DashboardPatientDetailPage() {
             name="address"
             value={form.address}
             onChange={handleInputChange}
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
@@ -215,7 +215,7 @@ export default function DashboardPatientDetailPage() {
             name="gender"
             value={form.gender}
             onChange={handleInputChange}
-            className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             <option value="Male">Laki-laki</option>
             <option value="Female">Perempuan</option>
@@ -227,7 +227,7 @@ export default function DashboardPatientDetailPage() {
           <label className="text-gray-700 font-semibold mb-2">
             Diagnosis Pasien
           </label>
-          <div className="p-3 border rounded-md bg-gray-100 text-gray-600">
+          <div className="p-2 border rounded-md bg-gray-100 text-gray-600">
             {patient.diagnosis.length > 0
               ? patient.diagnosis.join(", ")
               : "Belum ada diagnosis"}
@@ -236,7 +236,7 @@ export default function DashboardPatientDetailPage() {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-md font-semibold transition"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-semibold transition"
         >
           Simpan Perubahan
         </button>

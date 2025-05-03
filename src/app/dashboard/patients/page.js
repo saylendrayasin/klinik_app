@@ -69,7 +69,7 @@ export default function DashboardPatientsPage() {
   };
 
   return (
-    <div className="px-4 py-6 sm:p-8 max-w-7xl mx-auto">
+    <div className="sm:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
@@ -90,12 +90,12 @@ export default function DashboardPatientsPage() {
           placeholder="Cari nama pasien..."
           value={search}
           onChange={handleSearchChange}
-          className="flex-1 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <select
           value={sort}
           onChange={handleSortChange}
-          className="w-full sm:w-40 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full sm:w-40 p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
           <option value="name">Urutkan Nama</option>
           <option value="gender">Urutkan Jenis Kelamin</option>
