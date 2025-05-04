@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }) {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-md flex flex-col sm:hidden"
           >
-            <div className="flex items-center gap-3 px-3 sm:px-4 py-6 border-b">
+            <div className="flex items-center gap-3 px-3 py-6 border-b">
               <img
                 src="/icons/icon-192x192.png"
                 alt="Logo Klinik"
@@ -108,13 +108,13 @@ export default function DashboardLayout({ children }) {
               })}
             </nav>
 
-            <div className="px-4 py-4 border-t">
+            <div className="p-5 border-t">
               <button
                 onClick={() => {
                   setSidebarOpen(false);
                   signOut();
                 }}
-                className="flex items-center gap-2 w-full px-4 py-2 rounded-lg font-medium text-red-600 hover:bg-gray-100 transition"
+                className="flex items-center gap-2 w-full rounded-lg font-medium text-red-600 hover:bg-gray-100 transition"
               >
                 <FaSignOutAlt />
                 <span>Logout</span>
@@ -161,7 +161,7 @@ export default function DashboardLayout({ children }) {
         <div className="px-4 py-4 border-t">
           <button
             onClick={signOut}
-            className="flex items-center gap-2 w-full p-3 sm:p-4 rounded-lg font-medium text-red-600 hover:bg-gray-100 transition"
+            className="flex items-center gap-2 w-full p-4 rounded-lg font-medium text-red-600 hover:bg-gray-100 transition"
           >
             <FaSignOutAlt />
             <span>Logout</span>
