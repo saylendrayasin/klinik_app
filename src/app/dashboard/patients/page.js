@@ -11,10 +11,12 @@ export default function DashboardPatientsPage() {
   const [sort, setSort] = useState("name");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const limit = 5;
 
   const fetchPatients = async () => {
+    setLoading(true);
     try {
       const data = await fetcher(
         `/api/patients?page=${page}&limit=${limit}&search=${search}&sort=${sort}`
@@ -23,6 +25,8 @@ export default function DashboardPatientsPage() {
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,14 +96,36 @@ export default function DashboardPatientsPage() {
           onChange={handleSearchChange}
           className="flex-1 p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-        <select
-          value={sort}
-          onChange={handleSortChange}
-          className="w-full sm:w-40 p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
-          <option value="name">Urutkan Nama</option>
-          <option value="gender">Urutkan Jenis Kelamin</option>
-        </select>
+        <div className="relative w-full sm:w-48">
+          <select
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value);
+              setPage(1);
+            }}
+            className="appearance-none w-full p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
+          >
+            <option value="name">Urutkan Nama</option>
+            <option value="gender">Urutkan Jenis Kelamin</option>
+          </select>
+          {/* Custom arrow */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg
+              className="h-4 w-4 text-gray-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 20 20"
+              stroke="currentColor"
+            >
+              <path
+                d="M7 7l3-3 3 3m0 6l-3 3-3-3"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {/* Table (Desktop) */}
@@ -122,7 +148,24 @@ export default function DashboardPatientsPage() {
             </tr>
           </thead>
           <tbody>
-            {patients.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, idx) => (
+                <tr key={idx} className="animate-pulse border-t">
+                  <td className="py-4 px-6">
+                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="h-4 bg-gray-300 rounded w-1/3"></div>
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <div className="mx-auto h-8 bg-gray-300 rounded w-24"></div>
+                  </td>
+                </tr>
+              ))
+            ) : patients.length === 0 ? (
               <tr>
                 <td colSpan="4" className="text-center py-10 text-gray-500">
                   Tidak ada pasien ditemukan.
@@ -166,7 +209,23 @@ export default function DashboardPatientsPage() {
 
       {/* Card (Mobile) */}
       <div className="block sm:hidden space-y-6 mt-6">
-        {patients.length === 0 ? (
+        {loading ? (
+          // Skeleton Loader: tampilkan 3 dummy cards
+          Array.from({ length: 3 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="bg-white border rounded-lg shadow p-4 space-y-3 animate-pulse"
+            >
+              <div className="h-5 bg-gray-300 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex gap-2 mt-4">
+                <div className="flex-1 h-8 bg-gray-300 rounded-md"></div>
+                <div className="flex-1 h-8 bg-gray-300 rounded-md"></div>
+              </div>
+            </div>
+          ))
+        ) : patients.length === 0 ? (
           <div className="text-center text-gray-500 mt-10">
             Tidak ada pasien ditemukan.
           </div>
@@ -211,7 +270,7 @@ export default function DashboardPatientsPage() {
       <div className="flex items-center justify-center gap-4 mt-10">
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          disabled={page === 1}
+          disabled={page === 1 || loading}
           className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded disabled:opacity-50 transition"
         >
           {page === 1 ? "Awal" : "← Sebelumnya"}
@@ -223,7 +282,7 @@ export default function DashboardPatientsPage() {
 
         <button
           onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={page === totalPages}
+          disabled={page === totalPages || loading}
           className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded disabled:opacity-50 transition"
         >
           {page === totalPages ? "Akhir" : "Selanjutnya →"}

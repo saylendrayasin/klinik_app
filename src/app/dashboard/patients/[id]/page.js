@@ -210,16 +210,34 @@ export default function DashboardPatientDetailPage() {
           <label htmlFor="gender" className="text-gray-700 font-semibold mb-2">
             Jenis Kelamin
           </label>
-          <select
-            id="gender"
-            name="gender"
-            value={form.gender}
-            onChange={handleInputChange}
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="Male">Laki-laki</option>
-            <option value="Female">Perempuan</option>
-          </select>
+          <div className="relative">
+            <select
+              id="gender"
+              name="gender"
+              value={form.gender}
+              onChange={handleInputChange}
+              className="appearance-none p-2 border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
+            >
+              <option value="Male">Laki-laki</option>
+              <option value="Female">Perempuan</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <svg
+                className="h-4 w-4 text-gray-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 20 20"
+                stroke="currentColor"
+              >
+                <path
+                  d="M7 7l3-3 3 3m0 6l-3 3-3-3"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
         </div>
 
         {/* Display diagnosis */}
