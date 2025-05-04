@@ -94,7 +94,7 @@ export default function DashboardLayout({ children }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out ${
+                    className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ease-in-out ${
                       isActive
                         ? "bg-blue-600 text-white border-l-4 border-blue-800"
                         : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"
