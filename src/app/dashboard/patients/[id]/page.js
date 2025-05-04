@@ -126,6 +126,18 @@ export default function DashboardPatientDetailPage() {
     }
   };
 
+  const calculateAge = (dob) => {
+    if (!dob) return "-";
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-60">
@@ -191,6 +203,9 @@ export default function DashboardPatientDetailPage() {
             required
             className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
+          <span className="text-base text-gray-600 mt-1">
+            Usia: <strong>{calculateAge(form.dateOfBirth)}</strong> tahun
+          </span>
         </div>
 
         <div className="flex flex-col">
@@ -262,26 +277,31 @@ export default function DashboardPatientDetailPage() {
 
       {/* Daftar Kunjungan */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Daftar Kunjungan</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Daftar Kunjungan
+          </h2>
           <button
             onClick={handleOpenAddVisit}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-xm text-white px-4 py-2 rounded-md"
+            className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base px-4 py-2 rounded-md w-full sm:w-auto"
           >
-            <FaPlus /> Tambah Kunjungan
+            <FaPlus />
+            Tambah Kunjungan
           </button>
         </div>
 
         <div className="space-y-4">
           {patient.visits.length === 0 ? (
-            <p className="text-gray-500">Belum ada kunjungan.</p>
+            <p className="text-gray-500 text-sm sm:text-base">
+              Belum ada kunjungan.
+            </p>
           ) : (
             patient.visits.map((visit, index) => (
               <div
                 key={index}
                 className="bg-white p-4 rounded-md shadow-sm flex flex-col sm:flex-row sm:justify-between sm:items-center"
               >
-                <div className="space-y-1 text-gray-700">
+                <div className="space-y-1 text-gray-700 text-sm sm:text-base">
                   <p className="font-semibold">
                     {new Date(visit.date).toLocaleDateString()}
                   </p>
@@ -289,18 +309,20 @@ export default function DashboardPatientDetailPage() {
                   <p>Diagnosis: {visit.visitDiagnosis.join(", ")}</p>
                 </div>
 
-                <div className="flex gap-2 mt-4 sm:mt-0">
+                <div className="flex gap-2 mt-4 sm:mt-0 flex-wrap justify-end">
                   <button
                     onClick={() => handleOpenEditVisit(visit, index)}
-                    className="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded-md text-sm flex items-center gap-2"
+                    className="bg-yellow-400 hover:bg-yellow-500 text-white px-3 sm:px-4 py-2 rounded-md text-sm flex items-center gap-2"
                   >
-                    <FaEdit /> Lihat
+                    <FaEdit />
+                    Lihat
                   </button>
                   <button
                     onClick={() => handleDeleteVisit(index)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm flex items-center gap-2"
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm flex items-center gap-2"
                   >
-                    <FaTrash /> Hapus
+                    <FaTrash />
+                    Hapus
                   </button>
                 </div>
               </div>
