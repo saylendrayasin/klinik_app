@@ -3,12 +3,13 @@
   "short_name": "Klinik",
   "description": "Aplikasi Klinik Iya",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
-  "orientation": "portrait",
-  "id": "/",
-  "scope": "/",
+  "lang": "id",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",

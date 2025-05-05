@@ -5,11 +5,30 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+} */
+/* globals.css */
+
+/* Animasi loading skeleton */
+@keyframes skeletonPulse {
+  0% {
+    background-color: #e0e0e0; /* warna awal */
+  }
+  50% {
+    background-color: #d0d0d0; /* warna tengah */
+  }
+  100% {
+    background-color: #e0e0e0; /* kembali ke warna awal */
+  }
+}
+
+/* Kelas skeleton untuk digunakan pada elemen yang ingin diberi animasi */
+.skeleton {
+  animation: skeletonPulse 1.5s infinite ease-in-out;
 }
 
 body {

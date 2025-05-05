@@ -1,42 +1,69 @@
-// next.config.mjs
-import withPWA from "next-pwa";
-import defaultRuntimeCaching from "next-pwa/cache.js";
+import NextPWA from "next-pwa";
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    serverActions: {},
-  },
-};
-
-const customRuntimeCaching = [
-  ...defaultRuntimeCaching,
-  {
-    urlPattern: /^\/$/, // halaman root
-    handler: "NetworkFirst",
-    options: {
-      cacheName: "start-url",
-      networkTimeoutSeconds: 10,
-      expiration: {
-        maxEntries: 1,
-      },
-      plugins: [
-        {
-          handlerDidError: async () => {
-            return await caches.match("/offline.html");
-          },
-        },
-      ],
-    },
-  },
-];
-
-const pwaConfig = {
+const withPWA = NextPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
   disable: false,
-  runtimeCaching: customRuntimeCaching,
+  runtimeCaching: [
+    {
+      urlPattern: /^\/api\/(patients|public|data).*\.json$/, // only public/data endpoints
+      handler: "StaleWhileRevalidate",
+      method: "GET",
+      options: {
+        cacheName: "api-cache",
+        expiration: {
+          maxEntries: 20,
+          maxAgeSeconds: 24 * 60 * 60, // 1 day
+        },
+      },
+    },
+
+    {
+      urlPattern: /\.(?:js|css)$/i,
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "static-resources",
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+      },
+    },
+
+    {
+      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico|webp)$/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "images",
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 7 * 24 * 60 * 60,
+        },
+      },
+    },
+
+    {
+      urlPattern: /^\/api\/.*$/,
+      handler: "NetworkOnly",
+      method: "POST",
+    },
+    {
+      urlPattern: /^\/api\/.*$/,
+      handler: "NetworkOnly",
+      method: "PATCH",
+    },
+    {
+      urlPattern: /^\/api\/.*$/,
+      handler: "NetworkOnly",
+      method: "DELETE",
+    },
+  ],
+});
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
 };
 
-export default withPWA(pwaConfig)(nextConfig);
+export default withPWA(nextConfig);

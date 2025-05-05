@@ -73,12 +73,23 @@ export default function VisitModal({
             </button>
 
             {/* Judul */}
-            <h2 className="text-2xl font-bold mb-6 text-center">
+            <h2 className="text-xl font-bold mb-6 text-center">
               {mode === "add" ? "Tambah Kunjungan Baru" : "Edit Kunjungan"}
             </h2>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Diagnosis */}
+              <div className="flex flex-col">
+                <label className="font-semibold text-gray-700 mb-1">
+                  Diagnosis Kunjungan
+                </label>
+                <DiagnosisSelect
+                  value={form.visitDiagnosis}
+                  onChange={handleDiagnosisChange}
+                />
+              </div>
+
               {/* Tanggal */}
               <div className="flex flex-col">
                 <label
@@ -94,7 +105,7 @@ export default function VisitModal({
                   value={form.date}
                   onChange={handleChange}
                   required
-                  className="p-3 border rounded-md"
+                  className="p-2 border rounded-md w-full"
                 />
               </div>
 
@@ -114,7 +125,7 @@ export default function VisitModal({
                   placeholder="Masukkan keluhan pasien..."
                   required
                   rows="2"
-                  className="p-3 border rounded-md resize-none"
+                  className="p-2 border rounded-md resize-none"
                 />
               </div>
 
@@ -133,18 +144,7 @@ export default function VisitModal({
                   onChange={handleChange}
                   placeholder="Masukkan nama obat..."
                   rows="3"
-                  className="p-3 border rounded-md resize-none"
-                />
-              </div>
-
-              {/* Diagnosis */}
-              <div className="flex flex-col">
-                <label className="font-semibold text-gray-700 mb-1">
-                  Diagnosis Kunjungan
-                </label>
-                <DiagnosisSelect
-                  value={form.visitDiagnosis}
-                  onChange={handleDiagnosisChange}
+                  className="p-2 border rounded-md resize-none"
                 />
               </div>
 
@@ -152,7 +152,7 @@ export default function VisitModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold flex items-center justify-center gap-2 transition"
+                className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold flex items-center justify-center gap-2 transition"
               >
                 {submitting ? (
                   <>

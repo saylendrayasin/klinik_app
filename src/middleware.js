@@ -39,5 +39,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/api/(.*)"],
+  matcher: ["/((?!_next|favicon.ico|manifest.json|offline.html|icons).*)"],
 };
