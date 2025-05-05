@@ -22,10 +22,26 @@ export async function middleware(request) {
   const token = request.cookies.get("token")?.value;
   const path = request.nextUrl.pathname;
 
+  // 1. Special handling for "/" root route
+  if (path === "/") {
+    if (token) {
+      try {
+        await jwtVerify(token, secretKey);
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      } catch (error) {
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+    } else {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
+  // 2. Allow free access to public paths
   if (isPublicPath(path)) {
     return NextResponse.next();
   }
 
+  // 3. Guard all other API & dashboard pages
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
