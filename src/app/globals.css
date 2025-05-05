@@ -12,6 +12,57 @@
   }
 } */
 
+/* Skeleton animation - Pulsing effect */
+@keyframes skeletonPulse {
+  0% {
+    background-color: #e0e0e0; /* Gray background */
+  }
+  50% {
+    background-color: #f0f0f0; /* Slightly lighter gray for pulse effect */
+  }
+  100% {
+    background-color: #e0e0e0; /* Back to original gray */
+  }
+}
+
+/* Skeleton Loader Styles */
+.skeleton {
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+  background-color: #e0e0e0; /* Light gray background */
+  height: 100%; /* Takes full height of the element */
+  width: 100%; /* Takes full width of the element */
+  border-radius: 4px; /* Rounded corners for skeleton */
+}
+
+/* Skeleton Card styles for desktop */
+.skeleton-card {
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+  background-color: #e0e0e0;
+  height: 100px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+/* Skeleton Table Row */
+.skeleton-row {
+  display: flex;
+  gap: 1rem;
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+  background-color: #e0e0e0;
+  height: 40px;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}
+
+/* Mobile Skeleton Loader */
+.skeleton-mobile {
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+  background-color: #e0e0e0;
+  height: 80px;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
