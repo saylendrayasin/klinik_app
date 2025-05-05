@@ -5,6 +5,9 @@ const withPWA = NextPWA({
   register: true,
   skipWaiting: true,
   disable: false,
+  fallbacks: {
+    document: "/offline.html",
+  },
   runtimeCaching: [
     {
       urlPattern: /^\/api\/(patients|public|data).*\.json$/, // only public/data endpoints
