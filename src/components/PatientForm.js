@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
+import toast from "react-hot-toast";
 
 export default function PatientForm() {
   const [form, setForm] = useState({
@@ -21,13 +22,21 @@ export default function PatientForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await fetcher("/api/patients", {
+      const response = await fetcher("/api/patients", {
         method: "POST",
         body: JSON.stringify(form),
       });
-      router.push("/dashboard/patients"); // <-- pastikan balik ke dashboard ya
+
+      if (response && response.data && response.data._id) {
+        toast.success("Pasien berhasil ditambahkan, membuka halaman detail...");
+        setTimeout(() => {
+          router.push(`/dashboard/patients/${response.data._id}`);
+        }, 1000);
+      } else {
+        throw new Error("Gagal mendapatkan ID pasien baru.");
+      }
     } catch (error) {
-      alert(error.message);
+      toast.error("Gagal menambahkan pasien baru.");
     }
   };
 
