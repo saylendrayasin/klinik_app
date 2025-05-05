@@ -4,7 +4,6 @@ import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// metadata normal masih bisa di sini
 export const metadata = {
   title: "Klinik App",
   description: "Aplikasi Klinik",
