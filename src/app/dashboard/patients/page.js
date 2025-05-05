@@ -151,17 +151,17 @@ export default function DashboardPatientsPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, idx) => (
                 <tr key={idx} className="animate-pulse border-t">
-                  <td className="py-4 px-6 skeleton">
-                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                  <td className="py-4 px-6">
+                    <div className="h-4 bg-gray-300 rounded w-3/4 skeleton"></div>
                   </td>
-                  <td className="py-4 px-6 skeleton">
-                    <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                  <td className="py-4 px-6">
+                    <div className="h-4 bg-gray-300 rounded w-1/2 skeleton"></div>
                   </td>
-                  <td className="py-4 px-6 skeleton">
-                    <div className="h-4 bg-gray-300 rounded w-1/3"></div>
+                  <td className="py-4 px-6">
+                    <div className="h-4 bg-gray-300 rounded w-1/3 skeleton"></div>
                   </td>
-                  <td className="py-4 px-6 skeleton">
-                    <div className="mx-auto h-8 bg-gray-300 rounded w-24"></div>
+                  <td className="py-4 px-6 text-center">
+                    <div className="mx-auto h-8 bg-gray-300 rounded w-24 skeleton"></div>
                   </td>
                 </tr>
               ))
@@ -213,14 +213,14 @@ export default function DashboardPatientsPage() {
           Array.from({ length: 3 }).map((_, idx) => (
             <div
               key={idx}
-              className="bg-white border rounded-lg shadow p-4 space-y-3 animate-pulse"
+              className="bg-white border rounded-lg shadow p-4 space-y-3 animate-pulse skeleton-mobile"
             >
-              <div className="h-5 bg-gray-300 rounded w-1/2 skeleton"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/3 skeleton"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 skeleton"></div>
+              <div className="h-5 bg-gray-300 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
               <div className="flex gap-2 mt-4">
-                <div className="flex-1 h-8 bg-gray-300 rounded-md skeleton"></div>
-                <div className="flex-1 h-8 bg-gray-300 rounded-md skeleton"></div>
+                <div className="flex-1 h-8 bg-gray-300 rounded-md"></div>
+                <div className="flex-1 h-8 bg-gray-300 rounded-md"></div>
               </div>
             </div>
           ))
