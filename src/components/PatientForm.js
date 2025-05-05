@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
 import toast from "react-hot-toast";
+import { FaSpinner } from "react-icons/fa";
 
 export default function PatientForm() {
   const [form, setForm] = useState({
@@ -13,6 +14,8 @@ export default function PatientForm() {
     gender: "Male",
     diagnosis: [],
   });
+
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -21,27 +24,31 @@ export default function PatientForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await fetcher("/api/patients", {
         method: "POST",
         body: JSON.stringify(form),
       });
 
-      if (response && response.data && response.data._id) {
+      const id = response?.data?._id;
+      if (id) {
         toast.success("Pasien berhasil ditambahkan, membuka halaman detail...");
         setTimeout(() => {
-          router.push(`/dashboard/patients/${response.data._id}`);
+          router.push(`/dashboard/patients/${id}`);
         }, 1000);
       } else {
-        throw new Error("Gagal mendapatkan ID pasien baru.");
+        toast.error("Gagal mendapatkan ID pasien baru.");
       }
     } catch (error) {
       toast.error("Gagal menambahkan pasien baru.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleBack = () => {
-    router.push("/dashboard/patients");
+    if (!loading) router.push("/dashboard/patients");
   };
 
   return (
@@ -141,16 +148,25 @@ export default function PatientForm() {
           <button
             type="button"
             onClick={handleBack}
-            className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-md transition"
+            disabled={loading}
+            className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-md transition disabled:opacity-50"
           >
             Kembali
           </button>
 
           <button
             type="submit"
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md transition"
+            disabled={loading}
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Simpan Pasien
+            {loading ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              "Simpan Pasien"
+            )}
           </button>
         </div>
       </form>
