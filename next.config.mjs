@@ -5,19 +5,21 @@ const withPWA = NextPWA({
   register: true,
   skipWaiting: true,
   disable: false,
-  fallbacks: {
-    document: "/offline.html",
-  },
+  additionalManifestEntries: [
+    {
+      url: "/offline.html",
+    },
+  ],
   runtimeCaching: [
     {
-      urlPattern: /^\/api\/(patients|public|data).*\.json$/, // only public/data endpoints
+      urlPattern: /^\/api\/(patients|public|data).*\.json$/,
       handler: "StaleWhileRevalidate",
       method: "GET",
       options: {
         cacheName: "api-cache",
         expiration: {
           maxEntries: 20,
-          maxAgeSeconds: 24 * 60 * 60, // 1 day
+          maxAgeSeconds: 24 * 60 * 60,
         },
       },
     },
@@ -61,7 +63,22 @@ const withPWA = NextPWA({
       handler: "NetworkOnly",
       method: "DELETE",
     },
+
+    {
+      urlPattern: /^\/.*$/,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "html-cache",
+        networkTimeoutSeconds: 3,
+        expiration: {
+          maxEntries: 20,
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+      },
+    },
   ],
+
+  additionalManifestEntries: [{ url: "/offline.html", revision: null }],
 });
 
 /** @type {import('next').NextConfig} */
