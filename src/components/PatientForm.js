@@ -25,24 +25,23 @@ export default function PatientForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const response = await fetcher("/api/patients", {
         method: "POST",
         body: JSON.stringify(form),
       });
 
-      const id = response?.data?._id;
-      if (id) {
+      if (response?.data?._id) {
         toast.success("Pasien berhasil ditambahkan, membuka halaman detail...");
         setTimeout(() => {
-          router.push(`/dashboard/patients/${id}`);
+          router.push(`/dashboard/patients/${response.data._id}`);
         }, 1000);
       } else {
-        toast.error("Gagal mendapatkan ID pasien baru.");
+        throw new Error("Gagal mendapatkan ID pasien baru.");
       }
     } catch (error) {
       toast.error("Gagal menambahkan pasien baru.");
-    } finally {
       setLoading(false);
     }
   };
