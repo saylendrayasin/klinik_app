@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetcher } from "@/lib/fetcher";
-import { FaEye, FaTrash, FaUserInjured } from "react-icons/fa";
+import { FaEye, FaTrash, FaHeartbeat } from "react-icons/fa";
 
-export default function DashboardPatientsPage() {
-  const [patients, setPatients] = useState([]);
+export default function DashboardKbPage() {
+  const [kbList, setKbList] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("name");
   const [page, setPage] = useState(1);
@@ -15,13 +15,14 @@ export default function DashboardPatientsPage() {
 
   const limit = 5;
 
-  const fetchPatients = async () => {
+  const fetchKbList = async () => {
     setLoading(true);
     try {
       const data = await fetcher(
-        `/api/patients?page=${page}&limit=${limit}&search=${search}&sort=${sort}`
+        `/api/kb?page=${page}&limit=${limit}&search=${search}&sort=${sort}`
       );
-      setPatients(data.data);
+
+      setKbList(data.data);
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error(error);
@@ -31,7 +32,7 @@ export default function DashboardPatientsPage() {
   };
 
   useEffect(() => {
-    fetchPatients();
+    fetchKbList();
   }, [search, sort, page]);
 
   const handleSearchChange = (e) => {
@@ -39,19 +40,11 @@ export default function DashboardPatientsPage() {
     setPage(1);
   };
 
-  const handleSortChange = (e) => {
-    setSort(e.target.value);
-    setPage(1);
-  };
-
   const handleDelete = async (id) => {
-    if (!confirm("Yakin ingin menghapus pasien ini?")) return;
-
+    if (!confirm("Yakin ingin menghapus data KB ini?")) return;
     try {
-      await fetcher(`/api/patients/${id}`, {
-        method: "DELETE",
-      });
-      fetchPatients();
+      await fetcher(`/api/kb/${id}`, { method: "DELETE" });
+      fetchKbList();
     } catch (error) {
       console.error(error);
     }
@@ -62,11 +55,8 @@ export default function DashboardPatientsPage() {
     const birth = new Date(dob);
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birth.getDate())
-    ) {
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
     return age;
@@ -77,25 +67,25 @@ export default function DashboardPatientsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0 flex items-center gap-2">
-          <FaUserInjured className="text-blue-600" />
-          Daftar Pasien
+          <FaHeartbeat className="text-purple-600" />
+          Daftar KB
         </h1>
         <Link
-          href="/dashboard/patients/new"
-          className="w-full sm:w-auto inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-md text-center transition"
+          href="/dashboard/kb/new"
+          className="w-full sm:w-auto inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-5 rounded-md text-center transition"
         >
-          + Tambah Pasien
+          + Tambah KB
         </Link>
       </div>
 
-      {/* Search and Sort */}
+      {/* Search */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
         <input
           type="text"
-          placeholder="Cari nama pasien..."
+          placeholder="Cari nama..."
           value={search}
           onChange={handleSearchChange}
-          className="flex-1 p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
         />
         <div className="relative w-full sm:w-48">
           <select
@@ -104,12 +94,11 @@ export default function DashboardPatientsPage() {
               setSort(e.target.value);
               setPage(1);
             }}
-            className="appearance-none w-full p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
+            className="appearance-none w-full p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 pr-10"
           >
-            <option value="name">Urutkan Nama</option>
-            <option value="gender">Urutkan Jenis Kelamin</option>
+            <option value="name">Urutkan Nama</option>s
+            <option value="dateOfBirth">Urutkan Umur</option>
           </select>
-          {/* Custom arrow */}
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <svg
               className="h-4 w-4 text-gray-600"
@@ -138,10 +127,13 @@ export default function DashboardPatientsPage() {
                 Nama
               </th>
               <th className="py-4 px-6 text-left font-semibold text-gray-700">
+                NIK
+              </th>
+              <th className="py-4 px-6 text-left font-semibold text-gray-700">
                 Umur
               </th>
               <th className="py-4 px-6 text-left font-semibold text-gray-700">
-                Jenis Kelamin
+                Jumlah Anak
               </th>
               <th className="py-4 px-6 text-center font-semibold text-gray-700">
                 Aksi
@@ -152,49 +144,61 @@ export default function DashboardPatientsPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, idx) => (
                 <tr key={idx} className="animate-pulse border-t">
-                  <td className="py-4 px-6 skeleton">
+                  <td className="py-4 px-6">
                     <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                   </td>
-                  <td className="py-4 px-6 skeleton">
+                  <td className="py-4 px-6">
+                    <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                  </td>
+                  <td className="py-4 px-6">
                     <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                   </td>
-                  <td className="py-4 px-6 skeleton">
+                  <td className="py-4 px-6">
                     <div className="h-4 bg-gray-300 rounded w-1/3"></div>
                   </td>
-                  <td className="py-4 px-6 skeleton">
+                  <td className="py-4 px-6">
                     <div className="mx-auto h-8 bg-gray-300 rounded w-24"></div>
                   </td>
                 </tr>
               ))
-            ) : patients.length === 0 ? (
+            ) : kbList.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center py-10 text-gray-500">
-                  Tidak ada pasien ditemukan.
+                <td colSpan="5" className="text-center py-10 text-gray-500">
+                  Tidak ada data KB ditemukan.
                 </td>
               </tr>
             ) : (
-              patients.map((patient) => (
+              kbList.map((kb) => (
                 <tr
-                  key={patient._id}
+                  key={kb._id}
                   className="border-t hover:bg-gray-50 transition-all"
                 >
-                  <td className="py-4 px-6">{patient.name}</td>
+                  <td className="py-4 px-6">{kb.name}</td>
+                  <td className="py-4 px-6">{kb.nik}</td>
                   <td className="py-4 px-6">
-                    {calculateAge(patient.dateOfBirth)} Tahun
+                    {calculateAge(kb.dateOfBirth)} Tahun
                   </td>
                   <td className="py-4 px-6">
-                    {patient.gender === "Male" ? "Laki-laki" : "Perempuan"}
+                    <span
+                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                        kb.numberOfChildren > 3
+                          ? "bg-red-100 text-red-700"
+                          : "bg-purple-100 text-purple-700"
+                      }`}
+                    >
+                      {kb.numberOfChildren} anak
+                    </span>
                   </td>
                   <td className="py-4 px-6 flex justify-center gap-3">
                     <Link
-                      href={`/dashboard/patients/${patient._id}`}
-                      className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2 px-4 py-2 rounded-md text-sm"
+                      href={`/dashboard/kb/${kb._id}`}
+                      className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2 px-4 py-2 rounded-md text-sm"
                     >
                       <FaEye />
                       <span className="hidden md:inline">Lihat</span>
                     </Link>
                     <button
-                      onClick={() => handleDelete(patient._id)}
+                      onClick={() => handleDelete(kb._id)}
                       className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2 px-4 py-2 rounded-md text-sm"
                     >
                       <FaTrash />
@@ -225,36 +229,43 @@ export default function DashboardPatientsPage() {
               </div>
             </div>
           ))
-        ) : patients.length === 0 ? (
+        ) : kbList.length === 0 ? (
           <div className="text-center text-gray-500 mt-10">
-            Tidak ada pasien ditemukan.
+            Tidak ada data KB ditemukan.
           </div>
         ) : (
-          patients.map((patient) => (
+          kbList.map((kb) => (
             <div
-              key={patient._id}
+              key={kb._id}
               className="bg-white border rounded-lg shadow p-4 space-y-3"
             >
-              <h2 className="text-lg font-semibold text-gray-800">
-                {patient.name}
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-800">{kb.name}</h2>
+              <p className="text-gray-600">NIK: {kb.nik}</p>
               <p className="text-gray-600">
-                Umur: {calculateAge(patient.dateOfBirth)} Tahun
+                Umur: {calculateAge(kb.dateOfBirth)} Tahun
               </p>
               <p className="text-gray-600">
-                Jenis Kelamin:{" "}
-                {patient.gender === "Male" ? "Laki-laki" : "Perempuan"}
+                Jumlah Anak:{" "}
+                <span
+                  className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                    kb.numberOfChildren > 3
+                      ? "bg-red-100 text-red-700"
+                      : "bg-purple-100 text-purple-700"
+                  }`}
+                >
+                  {kb.numberOfChildren}
+                </span>
               </p>
               <div className="flex gap-2 mt-4">
                 <Link
-                  href={`/dashboard/patients/${patient._id}`}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm"
+                  href={`/dashboard/kb/${kb._id}`}
+                  className="flex-1 bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm"
                 >
                   <FaEye />
                   <span>Lihat</span>
                 </Link>
                 <button
-                  onClick={() => handleDelete(patient._id)}
+                  onClick={() => handleDelete(kb._id)}
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm"
                 >
                   <FaTrash />

@@ -9,6 +9,7 @@ import {
   FaSignOutAlt,
   FaTachometerAlt,
   FaUserInjured,
+  FaHeartbeat,
 } from "react-icons/fa";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +23,7 @@ export default function DashboardLayout({ children }) {
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
     { href: "/dashboard/patients", label: "Pasien", icon: <FaUserInjured /> },
+    { href: "/dashboard/kb", label: "KB", icon: <FaHeartbeat /> },
   ];
 
   useEffect(() => {

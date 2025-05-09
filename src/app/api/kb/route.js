@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/database";
-import { Patient } from "@/models/patient";
+import { Kb } from "@/models/kb";
 import { successResponse, errorResponse } from "@/lib/response";
 
 export async function GET(req) {
@@ -7,7 +7,6 @@ export async function GET(req) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 5;
     const search = searchParams.get("search") || "";
@@ -17,17 +16,17 @@ export async function GET(req) {
 
     const query = search ? { name: { $regex: search, $options: "i" } } : {};
 
-    const patients = await Patient.find(query)
+    const data = await Kb.find(query)
       .sort({ [sortField]: 1 })
       .skip(skip)
       .limit(limit);
 
-    const totalPatients = await Patient.countDocuments(query);
-    const totalPages = Math.max(1, Math.ceil(totalPatients / limit));
+    const totalData = await Kb.countDocuments(query);
+    const totalPages = Math.max(1, Math.ceil(totalData / limit));
 
     return Response.json({
       message: "Data pasien berhasil diambil",
-      data: patients,
+      data,
       page,
       totalPages,
     });
@@ -44,9 +43,9 @@ export async function POST(req) {
   try {
     await connectDB();
     const body = await req.json();
-    const newPatient = await Patient.create(body);
-    return successResponse("Patient created successfully", newPatient, 201);
+    const created = await Kb.create(body);
+    return successResponse("Data KB berhasil ditambahkan", created, 201);
   } catch (error) {
-    return errorResponse("Failed to create patient", 400, error.message);
+    return errorResponse("Gagal menambahkan data KB", 400, error.message);
   }
 }
