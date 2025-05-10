@@ -82,8 +82,8 @@ export default function KbEditPage() {
 
       <div>
         {loading ? (
-          <div className="text-center text-gray-500 text-sm">
-            Memuat data...
+          <div className="flex justify-center items-center h-60">
+            <div className="w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
           </div>
         ) : !kb ? (
           <div className="text-center text-red-500">
