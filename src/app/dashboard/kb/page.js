@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetcher } from "@/lib/fetcher";
 import { FaEye, FaTrash, FaHeartbeat } from "react-icons/fa";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 export default function DashboardKbPage() {
   const [kbList, setKbList] = useState([]);
@@ -278,25 +284,41 @@ export default function DashboardKbPage() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-center gap-4 mt-10">
+      <div className="flex items-center justify-center gap-4 mt-10 sm:gap-4 text-sm">
+        <button
+          onClick={() => setPage(1)}
+          disabled={page === 1 || loading}
+          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+        >
+          <ChevronsLeft size={18} />
+        </button>
+
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
           disabled={page === 1 || loading}
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded disabled:opacity-50 transition"
+          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
         >
-          {page === 1 ? "Awal" : "← Sebelumnya"}
+          <ChevronLeft size={18} />
         </button>
 
-        <div className="text-sm sm:text-base text-gray-700 font-semibold">
-          Halaman {page} dari {totalPages}
+        <div className="text-xs sm:text-base font-semibold text-gray-700">
+          {page}/{totalPages}
         </div>
 
         <button
           onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={page === totalPages || loading}
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded disabled:opacity-50 transition"
+          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
         >
-          {page === totalPages ? "Akhir" : "Selanjutnya →"}
+          <ChevronRight size={18} />
+        </button>
+
+        <button
+          onClick={() => setPage(totalPages)}
+          disabled={page === totalPages || loading}
+          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+        >
+          <ChevronsRight size={18} />
         </button>
       </div>
     </div>
