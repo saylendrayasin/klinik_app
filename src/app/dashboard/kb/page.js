@@ -284,41 +284,41 @@ export default function DashboardKbPage() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-center gap-4 mt-10 sm:gap-4 text-sm">
+      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-10">
         <button
           onClick={() => setPage(1)}
           disabled={page === 1 || loading}
-          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+          className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
         >
-          <ChevronsLeft size={18} />
+          <ChevronsLeft className="w-6 h-6 sm:w-5 sm:h-5" />
         </button>
 
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
           disabled={page === 1 || loading}
-          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+          className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft className="w-6 h-6 sm:w-5 sm:h-5" />
         </button>
 
-        <div className="text-xs sm:text-base font-semibold text-gray-700">
+        <div className="text-base sm:text-sm font-semibold text-gray-700">
           {page}/{totalPages}
         </div>
 
         <button
           onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={page === totalPages || loading}
-          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+          className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
         >
-          <ChevronRight size={18} />
+          <ChevronRight className="w-6 h-6 sm:w-5 sm:h-5" />
         </button>
 
         <button
           onClick={() => setPage(totalPages)}
           disabled={page === totalPages || loading}
-          className="p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+          className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
         >
-          <ChevronsRight size={18} />
+          <ChevronsRight className="w-6 h-6 sm:w-5 sm:h-5" />
         </button>
       </div>
     </div>

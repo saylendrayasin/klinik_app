@@ -107,14 +107,18 @@ export default function CalendarKb({ kb }) {
       </div>
 
       {/* Legend */}
-      <div className="mt-6 flex flex-wrap justify-center gap-6 text-sm sm:text-base">
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-full shadow-sm">
-          <span className="w-3 h-3 rounded-full bg-blue-600 ring-2 ring-blue-300" />
-          Tanggal Datang
+      <div className="mt-6 flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
+        <div className="flex items-center gap-2 sm:gap-3 bg-blue-50 border border-blue-200 text-blue-700 px-2 py-1 sm:px-4 sm:py-2 rounded-full shadow-sm">
+          <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-600 ring-2 ring-blue-300" />
+          <span className="tracking-tight sm:tracking-normal font-medium">
+            Tanggal Datang
+          </span>
         </div>
-        <div className="flex items-center gap-3 bg-pink-50 border border-pink-200 text-pink-700 px-4 py-2 rounded-full shadow-sm">
-          <span className="w-3 h-3 rounded-full bg-pink-500 ring-2 ring-pink-300" />
-          Tanggal Kembali
+        <div className="flex items-center gap-2 sm:gap-3 bg-pink-50 border border-pink-200 text-pink-700 px-2 py-1 sm:px-4 sm:py-2 rounded-full shadow-sm">
+          <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-pink-500 ring-2 ring-pink-300" />
+          <span className="tracking-tight sm:tracking-normal font-medium">
+            Tanggal Kembali
+          </span>
         </div>
       </div>
 
