@@ -5,7 +5,7 @@
   "scripts": {
     "dev-clear": "rm -rf .next && next dev --turbopack",
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
