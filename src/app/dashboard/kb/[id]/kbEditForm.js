@@ -1,52 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { fetcher } from "@/lib/fetcher";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { FaArrowLeft, FaEdit, FaPlus, FaTrash } from "react-icons/fa";
+import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import KbVisitModal from "@/components/KbVisitModal";
 
-export default function KbEditForm() {
-  const params = useParams();
-  const [kb, setKb] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({
-    name: "",
-    dateOfBirth: "",
-    address: "",
-    nik: "",
-    numberOfChildren: 0,
-  });
-
+export default function KbEditForm({ kb, form, setForm, onRefresh }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editVisitIndex, setEditVisitIndex] = useState(null);
   const [initialVisitData, setInitialVisitData] = useState(null);
   const [modalMode, setModalMode] = useState("add");
-
-  const fetchKb = async () => {
-    try {
-      const { data } = await fetcher(`/api/kb/${params.id}`);
-      setKb(data);
-      setForm({
-        name: data.name || "",
-        dateOfBirth: data.dateOfBirth
-          ? new Date(data.dateOfBirth).toISOString().slice(0, 10)
-          : "",
-        address: data.address || "",
-        nik: data.nik || "",
-        numberOfChildren: data.numberOfChildren || 0,
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (params?.id) fetchKb();
-  }, [params.id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -60,12 +23,13 @@ export default function KbEditForm() {
     e.preventDefault();
     const toastId = toast.loading("Menyimpan perubahan...");
     try {
-      await fetcher(`/api/kb/${params.id}`, {
+      await fetch(`/api/kb/${kb._id}`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, visits: kb.visits }),
       });
       toast.success("Perubahan berhasil disimpan!", { id: toastId });
-      await fetchKb();
+      await onRefresh();
     } catch (error) {
       console.error(error);
       toast.error("Gagal menyimpan perubahan!", { id: toastId });
@@ -95,11 +59,12 @@ export default function KbEditForm() {
       } else {
         updatedVisits.push(formData);
       }
-      await fetcher(`/api/kb/${params.id}`, {
+      await fetch(`/api/kb/${kb._id}`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visits: updatedVisits }),
       });
-      await fetchKb();
+      await onRefresh();
       setModalOpen(false);
       toast.success("Kunjungan berhasil disimpan!", { id: toastId });
     } catch (error) {
@@ -114,11 +79,12 @@ export default function KbEditForm() {
     try {
       const updatedVisits = [...kb.visits];
       updatedVisits.splice(index, 1);
-      await fetcher(`/api/kb/${params.id}`, {
+      await fetch(`/api/kb/${kb._id}`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visits: updatedVisits }),
       });
-      await fetchKb();
+      await onRefresh();
       toast.success("Kunjungan berhasil dihapus!", { id: toastId });
     } catch (error) {
       console.error(error);
@@ -137,20 +103,6 @@ export default function KbEditForm() {
     }
     return age;
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-60">
-        <div className="w-8 h-8 border-4 border-purple-500 border-dashed rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!kb) {
-    return (
-      <div className="text-center text-gray-500">Data KB tidak ditemukan.</div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-10">
@@ -299,7 +251,6 @@ export default function KbEditForm() {
                       })}
                     </p>
                   )}
-
                   <p>Metode: {visit.metode}</p>
                   {visit.notes && <p>Catatan: {visit.notes}</p>}
                 </div>

@@ -30,6 +30,17 @@
   animation: skeletonPulse 1.5s infinite ease-in-out;
 }
 
+/* calendar.css */
+.react-calendar__tile {
+  font-size: 1rem;
+  padding: 0.7em 0.3em;
+}
+
+.react-calendar {
+  width: 100% !important;
+  max-width: 1200px !important;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
