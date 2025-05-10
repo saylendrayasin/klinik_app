@@ -102,7 +102,7 @@ export default function KbForm() {
             value={form.dateOfBirth}
             onChange={handleChange}
             required
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
         </div>
 

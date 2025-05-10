@@ -122,7 +122,7 @@ export default function KbEditForm({ kb, form, setForm, onRefresh }) {
             value={form.name}
             onChange={handleInputChange}
             required
-            className="p-2 border rounded-md"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
         </div>
 
@@ -136,7 +136,7 @@ export default function KbEditForm({ kb, form, setForm, onRefresh }) {
             value={form.nik}
             onChange={handleInputChange}
             required
-            className="p-2 border rounded-md"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
         </div>
 
@@ -154,7 +154,7 @@ export default function KbEditForm({ kb, form, setForm, onRefresh }) {
             value={form.dateOfBirth}
             onChange={handleInputChange}
             required
-            className="p-2 border rounded-md"
+            className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
           <span className="text-sm text-gray-600 mt-1">
             Usia: <strong>{calculateAge(form.dateOfBirth)}</strong> tahun
@@ -170,7 +170,7 @@ export default function KbEditForm({ kb, form, setForm, onRefresh }) {
             name="address"
             value={form.address}
             onChange={handleInputChange}
-            className="p-2 border rounded-md"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
         </div>
 
@@ -188,7 +188,7 @@ export default function KbEditForm({ kb, form, setForm, onRefresh }) {
             min="0"
             value={form.numberOfChildren}
             onChange={handleInputChange}
-            className="p-2 border rounded-md"
+            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
         </div>
 
