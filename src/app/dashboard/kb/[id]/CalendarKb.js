@@ -66,27 +66,48 @@ export default function CalendarKb({ kb }) {
         </h3>
 
         <div className="space-y-4">
-          {matched.map((e, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-4 border-l-4 pl-4 rounded-md py-2"
-              style={{
-                borderColor: e.type === "datang" ? "#3b82f6" : "#ec4899",
-                backgroundColor: e.type === "datang" ? "#eff6ff" : "#fdf2f8",
-              }}
-            >
-              <div className="mt-0.5">
-                <div className="font-semibold text-sm text-gray-800">
-                  {e.type === "datang"
-                    ? "🟦 Tanggal Datang"
-                    : "🟣 Tanggal Kembali"}
-                </div>
-                <div className="text-sm text-gray-600 mt-0.5">
-                  Metode: <span className="font-medium">{e.metode}</span>
+          {matched.map((e, i) => {
+            const pair = events.find(
+              (ev) =>
+                ev.metode === e.metode &&
+                ev.type !== e.type &&
+                format(ev.date, "yyyy-MM-dd") !== todayStr
+            );
+
+            return (
+              <div
+                key={i}
+                className="flex items-start gap-4 border-l-4 pl-4 rounded-md py-2"
+                style={{
+                  borderColor: e.type === "datang" ? "#3b82f6" : "#ec4899",
+                  backgroundColor: e.type === "datang" ? "#eff6ff" : "#fdf2f8",
+                }}
+              >
+                <div className="mt-0.5">
+                  <div className="font-semibold text-sm text-gray-800">
+                    {e.type === "datang"
+                      ? "🟦 Tanggal Datang"
+                      : "🟣 Tanggal Kembali"}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-0.5">
+                    Metode: <span className="font-medium">{e.metode}</span>
+                  </div>
+
+                  {pair && (
+                    <div className="text-sm text-gray-500 mt-1 italic">
+                      {e.type === "datang"
+                        ? "Tanggal Kembali"
+                        : "Tanggal Datang"}
+                      :{" "}
+                      <span className="font-bold">
+                        {format(pair.date, "dd MMMM yyyy", { locale: id })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
