@@ -46,6 +46,17 @@ export async function POST(req) {
     const created = await Kb.create(body);
     return successResponse("Data KB berhasil ditambahkan", created, 201);
   } catch (error) {
+    console.error(error);
+
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return errorResponse(
+        `${field} sudah terdaftar, silakan gunakan nilai lain`,
+        409,
+        error.message
+      );
+    }
+
     return errorResponse("Gagal menambahkan data KB", 400, error.message);
   }
 }

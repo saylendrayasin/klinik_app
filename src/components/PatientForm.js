@@ -27,9 +27,15 @@ export default function PatientForm() {
     setLoading(true);
 
     try {
+      const payload = {
+        ...form,
+        name: form.name.trim(),
+        address: form.address?.trim(),
+      };
+
       const response = await fetcher("/api/patients", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (response?.data?._id) {

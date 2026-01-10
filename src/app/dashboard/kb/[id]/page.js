@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import KbEditForm from "./kbEditForm";
 import CalendarKb from "./CalendarKb";
-import { FaArrowLeft, FaCalendarAlt, FaEdit } from "react-icons/fa";
+import KbVisitsTab from "./KbVisitTab";
+import { FaArrowLeft, FaCalendarAlt, FaEdit, FaListUl } from "react-icons/fa";
 import { useRouter, useParams } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
 
@@ -57,10 +58,11 @@ export default function KbEditPage() {
         </button>
       </div>
 
+      {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-6">
         <button
           onClick={() => setActiveTab("calendar")}
-          className={`flex items-center gap-2 px-4 py-2 font-semibold text-sm rounded-t-md transition-all duration-150 ${
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
             activeTab === "calendar"
               ? "bg-purple-100 text-purple-700 border-b-2 border-purple-600"
               : "text-gray-600 hover:text-purple-600"
@@ -68,9 +70,10 @@ export default function KbEditPage() {
         >
           <FaCalendarAlt /> Kalender
         </button>
+
         <button
           onClick={() => setActiveTab("data")}
-          className={`flex items-center gap-2 px-4 py-2 font-semibold text-sm rounded-t-md transition-all duration-150 ${
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
             activeTab === "data"
               ? "bg-purple-100 text-purple-700 border-b-2 border-purple-600"
               : "text-gray-600 hover:text-purple-600"
@@ -78,12 +81,23 @@ export default function KbEditPage() {
         >
           <FaEdit /> Edit Data
         </button>
+
+        <button
+          onClick={() => setActiveTab("visits")}
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
+            activeTab === "visits"
+              ? "bg-purple-100 text-purple-700 border-b-2 border-purple-600"
+              : "text-gray-600 hover:text-purple-600"
+          }`}
+        >
+          <FaListUl /> Kunjungan
+        </button>
       </div>
 
       <div>
         {loading ? (
           <div className="flex justify-center items-center h-60">
-            <div className="w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-purple-500 border-dashed rounded-full animate-spin"></div>
           </div>
         ) : !kb ? (
           <div className="text-center text-red-500">
@@ -91,13 +105,15 @@ export default function KbEditPage() {
           </div>
         ) : activeTab === "calendar" ? (
           <CalendarKb kb={kb} />
-        ) : (
+        ) : activeTab === "data" ? (
           <KbEditForm
             kb={kb}
             form={form}
             setForm={setForm}
             onRefresh={fetchKb}
           />
+        ) : (
+          <KbVisitsTab kb={kb} onRefresh={fetchKb} />
         )}
       </div>
     </div>

@@ -45,6 +45,16 @@ export async function PATCH(req, context) {
     return successResponse("Berhasil update data KB", kb);
   } catch (error) {
     console.error(error);
+
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return errorResponse(
+        `${field} sudah terdaftar, silakan gunakan nilai lain`,
+        409,
+        error.message
+      );
+    }
+
     return errorResponse("Gagal update data KB", 400, error.message);
   }
 }

@@ -30,12 +30,22 @@ export async function PATCH(req, context) {
     if (body.gender !== undefined) patient.gender = body.gender;
     if (body.visits !== undefined) patient.visits = body.visits;
 
+    patient.name = patient.name.trim();
+
     const allVisitDiagnosis = patient.visits
       .flatMap((visit) => visit.visitDiagnosis || [])
       .filter((diag) => typeof diag === "string" && diag.trim() !== "");
 
     const uniqueDiagnosis = Array.from(new Set(allVisitDiagnosis));
     patient.diagnosis = uniqueDiagnosis;
+
+    const allVisitDiagnosisIds = patient.visits
+      .flatMap((visit) => visit.visitDiagnosisIds || [])
+      .filter(Boolean)
+      .map((x) => String(x));
+
+    const uniqueIds = Array.from(new Set(allVisitDiagnosisIds));
+    patient.diagnosisIds = uniqueIds;
 
     await patient.save();
 

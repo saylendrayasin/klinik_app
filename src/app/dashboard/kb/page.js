@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fetcher } from "@/lib/fetcher";
-import { FaEye, FaTrash, FaHeartbeat } from "react-icons/fa";
+import { FaEye, FaTrash, FaHeartbeat, FaFileExcel } from "react-icons/fa";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  X,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function DashboardKbPage() {
   const [kbList, setKbList] = useState([]);
@@ -18,6 +20,13 @@ export default function DashboardKbPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  // ===== Export modal state =====
+  const [exportOpen, setExportOpen] = useState(false);
+  const now = useMemo(() => new Date(), []);
+  const [exportMonth, setExportMonth] = useState(now.getMonth() + 1); // 1-12
+  const [exportYear, setExportYear] = useState(now.getFullYear());
+  const [exportMode, setExportMode] = useState("visits"); // visits | people
 
   const limit = 5;
 
@@ -39,6 +48,7 @@ export default function DashboardKbPage() {
 
   useEffect(() => {
     fetchKbList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, sort, page]);
 
   const handleSearchChange = (e) => {
@@ -68,20 +78,87 @@ export default function DashboardKbPage() {
     return age;
   };
 
+  // ===== Export handler (download excel) =====
+  const handleExport = () => {
+    const m = Number(exportMonth);
+    const y = Number(exportYear);
+
+    if (!m || m < 1 || m > 12) return toast.error("Bulan tidak valid");
+    if (!y || y < 1900) return toast.error("Tahun tidak valid");
+
+    setExportOpen(false);
+    downloadExport({ month: m, year: y, mode: exportMode });
+  };
+
+  const downloadExport = async ({ month, year, mode }) => {
+    const qs = new URLSearchParams({
+      month: String(month),
+      year: String(year),
+      mode: String(mode),
+    });
+
+    const url = `/api/kb/export?${qs.toString()}`;
+
+    const toastId = toast.loading("Menyiapkan file...");
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        // export endpoint kamu pakai errorResponse => json
+        let msg = "Gagal export";
+        try {
+          const err = await res.json();
+          msg = err?.message || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      const blob = await res.blob();
+      const filename = `kb-${year}-${String(month).padStart(2, "0")}.xlsx`;
+
+      const a = document.createElement("a");
+      const objectUrl = window.URL.createObjectURL(blob);
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(objectUrl);
+
+      toast.success("File berhasil diunduh", { id: toastId });
+    } catch (e) {
+      toast.error(e?.message || "Gagal download", { id: toastId });
+    }
+  };
+
   return (
     <div className="sm:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0 flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-3">
+        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <FaHeartbeat className="text-purple-600" />
           Daftar KB
         </h1>
-        <Link
-          href="/dashboard/kb/new"
-          className="w-full sm:w-auto inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-5 rounded-md text-center transition"
-        >
-          + Tambah KB
-        </Link>
+
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setExportOpen(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-5 rounded-md text-center transition"
+          >
+            <FaFileExcel />
+            Export
+          </button>
+
+          <Link
+            href="/dashboard/kb/new"
+            className="w-full sm:w-auto inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-5 rounded-md text-center transition"
+          >
+            + Tambah KB
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
@@ -102,7 +179,7 @@ export default function DashboardKbPage() {
             }}
             className="appearance-none w-full p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 pr-10"
           >
-            <option value="name">Urutkan Nama</option>s
+            <option value="name">Urutkan Nama</option>
             <option value="dateOfBirth">Urutkan Umur</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -321,6 +398,105 @@ export default function DashboardKbPage() {
           >
             <ChevronsRight className="w-6 h-6 sm:w-5 sm:h-5" />
           </button>
+        </div>
+      )}
+
+      {/* ===== Export Modal ===== */}
+      {exportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* overlay */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setExportOpen(false)}
+          />
+
+          {/* modal */}
+          <div className="relative w-full max-w-md rounded-xl bg-white shadow-lg border">
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-gray-800">
+                  Export Data KB
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Pilih bulan & tahun laporan
+                </p>
+              </div>
+              <button
+                onClick={() => setExportOpen(false)}
+                className="p-2 rounded-md hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-700 mb-1">
+                    Bulan
+                  </label>
+                  <select
+                    value={exportMonth}
+                    onChange={(e) => setExportMonth(Number(e.target.value))}
+                    className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  >
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-700 mb-1">
+                    Tahun
+                  </label>
+                  <input
+                    type="number"
+                    value={exportYear}
+                    onChange={(e) => setExportYear(Number(e.target.value))}
+                    min={1900}
+                    className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-semibold text-gray-700 mb-1">
+                  Mode Export
+                </label>
+                <select
+                  value={exportMode}
+                  onChange={(e) => setExportMode(e.target.value)}
+                  className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                >
+                  <option value="visits">Kunjungan (per baris)</option>
+                  <option value="people">Orang (unik per orang)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  * Kunjungan cocok untuk laporan layanan bulanan.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 border-t flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => setExportOpen(false)}
+                className="w-full sm:w-auto flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-md transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleExport}
+                className="w-full sm:w-auto flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-md transition inline-flex items-center justify-center gap-2"
+              >
+                <FaFileExcel />
+                Download Excel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

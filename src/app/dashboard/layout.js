@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import { Settings2 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
@@ -24,6 +25,7 @@ export default function DashboardLayout({ children }) {
     { href: "/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
     { href: "/dashboard/patients", label: "Pasien", icon: <FaUserInjured /> },
     { href: "/dashboard/kb", label: "KB", icon: <FaHeartbeat /> },
+    { href: "/dashboard/config", label: "Konfigurasi", icon: <Settings2 /> },
   ];
 
   useEffect(() => {

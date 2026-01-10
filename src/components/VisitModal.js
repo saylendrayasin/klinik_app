@@ -16,7 +16,7 @@ export default function VisitModal({
     date: "",
     complaint: "",
     medication: "",
-    visitDiagnosis: [],
+    visitDiagnosisIds: [],
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +29,8 @@ export default function VisitModal({
           : "",
         complaint: initialData.complaint || "",
         medication: initialData.medication || "",
-        visitDiagnosis: initialData.visitDiagnosis || [],
+        visitDiagnosisIds:
+          initialData.visitDiagnosisIds || initialData.visitDiagnosis || [],
       });
     }
   }, [initialData]);
@@ -39,8 +40,8 @@ export default function VisitModal({
   };
 
   const handleDiagnosisChange = (selectedOptions) => {
-    const selectedValues = selectedOptions.map((option) => option.value);
-    setForm({ ...form, visitDiagnosis: selectedValues });
+    const selectedIds = (selectedOptions || []).map((opt) => opt.value);
+    setForm({ ...form, visitDiagnosisIds: selectedIds });
   };
 
   const handleSubmit = async (e) => {
@@ -63,7 +64,6 @@ export default function VisitModal({
             transition={{ duration: 0.2 }}
             className="bg-white rounded-md shadow-md w-full max-w-lg p-6 relative"
           >
-            {/* Tombol close */}
             <button
               onClick={onClose}
               disabled={submitting}
@@ -72,25 +72,21 @@ export default function VisitModal({
               ×
             </button>
 
-            {/* Judul */}
             <h2 className="text-xl font-bold mb-6 text-center">
               {mode === "add" ? "Tambah Kunjungan Baru" : "Edit Kunjungan"}
             </h2>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Diagnosis */}
               <div className="flex flex-col">
                 <label className="font-semibold text-gray-700 mb-1">
                   Diagnosis Kunjungan
                 </label>
                 <DiagnosisSelect
-                  value={form.visitDiagnosis}
+                  value={form.visitDiagnosisIds}
                   onChange={handleDiagnosisChange}
                 />
               </div>
 
-              {/* Tanggal */}
               <div className="flex flex-col">
                 <label
                   htmlFor="date"
@@ -109,7 +105,6 @@ export default function VisitModal({
                 />
               </div>
 
-              {/* Keluhan */}
               <div className="flex flex-col">
                 <label
                   htmlFor="complaint"
@@ -129,7 +124,6 @@ export default function VisitModal({
                 />
               </div>
 
-              {/* Obat */}
               <div className="flex flex-col">
                 <label
                   htmlFor="medication"
@@ -148,7 +142,6 @@ export default function VisitModal({
                 />
               </div>
 
-              {/* Tombol submit */}
               <button
                 type="submit"
                 disabled={submitting}

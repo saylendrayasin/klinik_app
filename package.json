@@ -1,6 +1,6 @@
 {
   "name": "klinik_app",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev-clear": "rm -rf .next && next dev --turbopack",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "date-fns": "^4.1.0",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.9.2",
     "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",

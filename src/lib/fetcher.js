@@ -22,19 +22,38 @@ export async function fetcher(url, options = {}) {
     const res = await fetch(url, {
       credentials: "include",
       cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
       ...options,
     });
 
     if (res.status === 401 || res.status === 403) {
       await signOutFetcher();
-      return;
+      throw new Error("Unauthorized");
     }
 
-    const data = await res.json();
+    let data = null;
+    const text = await res.text();
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = { message: text };
+    }
+
+    if (!res.ok) {
+      const msg = data?.message || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+
+    if (data?.status === false) {
+      throw new Error(data?.message || "Request failed");
+    }
+
     return data;
   } catch (error) {
     console.error("Fetcher error:", error);
-    toast.error("Gagal memuat data");
     throw error;
   }
 }

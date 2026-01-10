@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaSpinner } from "react-icons/fa";
 
 const metodeList = [
-  { label: "Suntik 1 Bulan", value: "Suntik 1 Bulan", days: 28 },
-  { label: "Suntik 2 Bulan", value: "Suntik 2 Bulan", days: 56 },
+  { label: "Suntik 1 Bulan", value: "Suntik 1 Bulan", days: 29 },
+  { label: "Suntik 2 Bulan", value: "Suntik 2 Bulan", days: 58 },
   { label: "Suntik 3 Bulan", value: "Suntik 3 Bulan", days: 84 },
   { label: "Implant", value: "Implant", days: 365 * 3 },
   { label: "IUD TCU", value: "IUD TCU", days: 365 * 3 },

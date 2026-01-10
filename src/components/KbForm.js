@@ -41,7 +41,7 @@ export default function KbForm() {
         throw new Error("Gagal mendapatkan ID dari respons.");
       }
     } catch (error) {
-      toast.error("Gagal menambahkan data KB.");
+      toast.error(error?.message || "Gagal menambahkan data KB.");
       setLoading(false);
     }
   };
