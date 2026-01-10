@@ -38,12 +38,25 @@ export default function KbEditForm({ kb, form, setForm, onRefresh }) {
 
   const calculateAge = (dob) => {
     if (!dob) return "-";
+
     const birth = new Date(dob);
+    if (Number.isNaN(birth.getTime())) return "-";
+
     const today = new Date();
+
+    if (birth > today) return 0;
+
     let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    return age;
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
+      age--;
+    }
+
+    return Math.max(0, age);
   };
 
   return (

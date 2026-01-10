@@ -151,7 +151,6 @@ export default function DashboardConfigPage() {
           >
             <option value="label">Urutkan Label</option>
             <option value="code">Urutkan Code</option>
-            <option value="isActive">Urutkan Status</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <svg
