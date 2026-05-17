@@ -45,11 +45,6 @@ export default function DashboardPatientsPage() {
     setPage(1);
   };
 
-  const handleSortChange = (e) => {
-    setSort(e.target.value);
-    setPage(1);
-  };
-
   const handleDelete = async (id) => {
     if (!confirm("Yakin ingin menghapus pasien ini?")) return;
 

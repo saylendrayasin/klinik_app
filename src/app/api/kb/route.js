@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/database";
 import { Kb } from "@/models/kb";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, paginatedResponse, errorResponse } from "@/lib/response";
+
+const ALLOWED_SORT_KB = ["name", "nik", "createdAt"];
 
 export async function GET(req) {
   try {
@@ -10,11 +12,12 @@ export async function GET(req) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 5;
     const search = searchParams.get("search") || "";
-    const sortField = searchParams.get("sort") || "name";
+    const rawSort = searchParams.get("sort");
+    const sortField = ALLOWED_SORT_KB.includes(rawSort) ? rawSort : "name";
 
     const skip = (page - 1) * limit;
 
-    const query = search ? { name: { $regex: search, $options: "i" } } : {};
+    const query = search ? { name: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : {};
 
     const data = await Kb.find(query)
       .sort({ [sortField]: 1 })
@@ -24,18 +27,10 @@ export async function GET(req) {
     const totalData = await Kb.countDocuments(query);
     const totalPages = Math.max(1, Math.ceil(totalData / limit));
 
-    return Response.json({
-      message: "Data pasien berhasil diambil",
-      data,
-      page,
-      totalPages,
-    });
+    return paginatedResponse("Data KB berhasil diambil", data, page, totalPages);
   } catch (error) {
     console.error(error);
-    return Response.json(
-      { message: "Gagal mengambil data pasien" },
-      { status: 500 }
-    );
+    return errorResponse("Gagal mengambil data KB", 500);
   }
 }
 

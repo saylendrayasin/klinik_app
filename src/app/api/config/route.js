@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/database";
 import { Config } from "@/models/config";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, paginatedResponse, errorResponse } from "@/lib/response";
+
+const ALLOWED_SORT_CONFIG = ["label", "code", "type", "createdAt"];
 
 function slugifyLabel(label) {
   return String(label || "")
@@ -29,7 +31,8 @@ export async function GET(req) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const search = searchParams.get("search") || "";
-    const sortField = searchParams.get("sort") || "label";
+    const rawSort = searchParams.get("sort");
+    const sortField = ALLOWED_SORT_CONFIG.includes(rawSort) ? rawSort : "label";
     const includeInactive = (searchParams.get("includeInactive") || "") === "1";
 
     const skip = (page - 1) * limit;
@@ -39,9 +42,10 @@ export async function GET(req) {
     if (!includeInactive) query.isActive = true;
 
     if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.$or = [
-        { label: { $regex: search, $options: "i" } },
-        { code: { $regex: search, $options: "i" } },
+        { label: { $regex: escaped, $options: "i" } },
+        { code: { $regex: escaped, $options: "i" } },
       ];
     }
 
@@ -53,18 +57,10 @@ export async function GET(req) {
     const totalItems = await Config.countDocuments(query);
     const totalPages = Math.max(1, Math.ceil(totalItems / limit));
 
-    return Response.json({
-      message: "Data config berhasil diambil",
-      data: items,
-      page,
-      totalPages,
-    });
+    return paginatedResponse("Data config berhasil diambil", items, page, totalPages);
   } catch (error) {
     console.error(error);
-    return Response.json(
-      { message: "Gagal mengambil data config" },
-      { status: 500 }
-    );
+    return errorResponse("Gagal mengambil data config", 500);
   }
 }
 

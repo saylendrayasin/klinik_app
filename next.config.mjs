@@ -1,6 +1,6 @@
-import NextPWA from "next-pwa";
+import withPWAInit from "@ducanh2912/next-pwa";
 
-const withPWA = NextPWA({
+const withPWA = withPWAInit({
   dest: "public",
   register: true,
   skipWaiting: true,

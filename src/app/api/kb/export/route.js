@@ -232,7 +232,7 @@ export async function GET(req) {
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Disposition": `attachment; filename=${filename}`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },

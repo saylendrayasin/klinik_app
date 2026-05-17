@@ -10,15 +10,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.9.2",
     "jose": "^6.0.10",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.509.0",
     "mongoose": "^8.13.2",
     "next": "^15.2.6",
-    "next-pwa": "^5.6.0",
     "react": "^19.0.0",
     "react-calendar": "^5.1.0",
     "react-dom": "^19.0.0",

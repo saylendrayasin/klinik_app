@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 import { errorResponse } from "@/lib/response";
+
+const secretKey = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function POST(req) {
   try {
@@ -8,7 +10,6 @@ export async function POST(req) {
 
     const envUsername = process.env.AUTH_USERNAME;
     const envPassword = process.env.AUTH_PASSWORD;
-    const jwtSecret = process.env.JWT_SECRET;
 
     if (!username || !password) {
       return errorResponse("Username dan password wajib diisi", 400);
@@ -18,12 +19,14 @@ export async function POST(req) {
       return errorResponse("Username atau password salah", 401);
     }
 
-    const payload = { username };
-
     const expiresIn = rememberMe ? "7d" : "1d";
     const maxAge = rememberMe ? 7 * 24 * 60 * 60 : 24 * 60 * 60;
 
-    const token = jwt.sign(payload, jwtSecret, { expiresIn });
+    const token = await new SignJWT({ username })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime(expiresIn)
+      .sign(secretKey);
 
     const response = NextResponse.json(
       { status: true, message: "Login berhasil", data: { username } },
