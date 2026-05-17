@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
 import VisitModal from "@/components/VisitModal";
 import { toast } from "react-hot-toast";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import {
   FaPlus,
   FaArrowLeft,
@@ -14,12 +16,41 @@ import {
   FaClipboardList,
 } from "react-icons/fa";
 
+function fmtDate(d) {
+  if (!d) return "-";
+  try {
+    return format(new Date(d), "dd MMMM yyyy", { locale: localeId });
+  } catch {
+    return "-";
+  }
+}
+
+function calculateAge(dob) {
+  if (!dob) return "-";
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return "-";
+  const today = new Date();
+  if (birth > today) return 0;
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
+  return Math.max(0, age);
+}
+
+function DataItem({ label, value, className = "" }) {
+  return (
+    <div className={className}>
+      <span className="text-xs text-gray-400 uppercase tracking-wide">{label}</span>
+      <p className="font-medium text-gray-800">{value || "-"}</p>
+    </div>
+  );
+}
+
 export default function DashboardPatientDetailPage() {
   const params = useParams();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState("data");
-
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -47,22 +78,24 @@ export default function DashboardPatientDetailPage() {
     }
   };
 
-  const renderPatientDiagnosis = () => {
-    if (
-      Array.isArray(patient?.diagnosisIds) &&
-      patient.diagnosisIds.length > 0
-    ) {
-      const labels = patient.diagnosisIds
-        .map((id) => diagnosisMap[id] || id)
-        .filter(Boolean);
-      return labels.length ? labels.join(", ") : "Belum ada diagnosis";
+  const getDiagnosisLabels = (visit) => {
+    if (Array.isArray(visit?.visitDiagnosisIds) && visit.visitDiagnosisIds.length > 0) {
+      return visit.visitDiagnosisIds.map((id) => diagnosisMap[id] || id).filter(Boolean);
     }
+    if (Array.isArray(visit?.visitDiagnosis) && visit.visitDiagnosis.length > 0) {
+      return visit.visitDiagnosis;
+    }
+    return [];
+  };
 
+  const getPatientDiagnosisLabels = () => {
+    if (Array.isArray(patient?.diagnosisIds) && patient.diagnosisIds.length > 0) {
+      return patient.diagnosisIds.map((id) => diagnosisMap[id] || id).filter(Boolean);
+    }
     if (Array.isArray(patient?.diagnosis) && patient.diagnosis.length > 0) {
-      return patient.diagnosis.join(", ");
+      return patient.diagnosis;
     }
-
-    return "Belum ada diagnosis";
+    return [];
   };
 
   const fetchPatient = async () => {
@@ -89,6 +122,7 @@ export default function DashboardPatientDetailPage() {
       fetchDiagnosisMap();
       fetchPatient();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const handleInputChange = (e) => {
@@ -103,7 +137,7 @@ export default function DashboardPatientDetailPage() {
         method: "PATCH",
         body: JSON.stringify({ ...form, visits: patient.visits }),
       });
-      toast.success("Perubahan pasien berhasil disimpan!", { id: toastId });
+      toast.success("Perubahan berhasil disimpan!", { id: toastId });
       await fetchPatient();
     } catch (error) {
       console.error(error);
@@ -129,18 +163,15 @@ export default function DashboardPatientDetailPage() {
     const toastId = toast.loading("Menyimpan kunjungan...");
     try {
       const updatedVisits = [...(patient.visits || [])];
-
       if (modalMode === "edit" && editVisitIndex !== null) {
         updatedVisits[editVisitIndex] = formData;
       } else {
         updatedVisits.push(formData);
       }
-
       await fetcher(`/api/patients/${params.id}`, {
         method: "PATCH",
         body: JSON.stringify({ visits: updatedVisits }),
       });
-
       await fetchPatient();
       setModalOpen(false);
       toast.success("Kunjungan berhasil disimpan!", { id: toastId });
@@ -156,12 +187,10 @@ export default function DashboardPatientDetailPage() {
     try {
       const updatedVisits = [...patient.visits];
       updatedVisits.splice(index, 1);
-
       await fetcher(`/api/patients/${params.id}`, {
         method: "PATCH",
         body: JSON.stringify({ visits: updatedVisits }),
       });
-
       await fetchPatient();
       toast.success("Kunjungan berhasil dihapus!", { id: toastId });
     } catch (error) {
@@ -170,271 +199,256 @@ export default function DashboardPatientDetailPage() {
     }
   };
 
-  const calculateAge = (dob) => {
-    if (!dob) return "-";
-
-    const birth = new Date(dob);
-    if (Number.isNaN(birth.getTime())) return "-";
-
-    const today = new Date();
-
-    if (birth > today) return 0;
-
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birth.getDate())
-    ) {
-      age--;
-    }
-
-    return Math.max(0, age);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-60">
-        <div className="w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!patient) {
-    return (
-      <div className="text-center text-gray-500">
-        Data pasien tidak ditemukan.
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Tombol kembali (atas) */}
-      <div className="flex justify-start">
+    <div className="max-w-4xl mx-auto">
+      {/* Back */}
+      <div className="flex justify-start mb-4">
         <button
           onClick={() => router.push("/dashboard/patients")}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
         >
           <FaArrowLeft /> Kembali
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab("data")}
-          className={`flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
-            activeTab === "data"
-              ? "bg-blue-100 text-blue-700 border-b-2 border-blue-600"
-              : "text-gray-600 hover:text-blue-600"
-          }`}
-        >
-          <FaUserEdit className="text-sm sm:text-base" /> Edit Data
-        </button>
-
-        <button
-          onClick={() => setActiveTab("visits")}
-          className={`flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
-            activeTab === "visits"
-              ? "bg-blue-100 text-blue-700 border-b-2 border-blue-600"
-              : "text-gray-600 hover:text-blue-600"
-          }`}
-        >
-          <FaClipboardList className="text-sm sm:text-base" /> Kunjungan
-        </button>
-      </div>
-
-      {/* TAB CONTENT */}
-      {activeTab === "data" ? (
-        <form
-          onSubmit={handleUpdatePatient}
-          className="space-y-6 bg-white rounded-md shadow-md p-4"
-        >
-          <h1 className="text-2xl font-bold mb-6">Edit Data Pasien</h1>
-
-          <div className="flex flex-col">
-            <label htmlFor="name" className="text-gray-700 font-semibold mb-2">
-              Nama Pasien
-            </label>
-            <input
-              id="name"
-              name="name"
-              value={form.name}
-              onChange={handleInputChange}
-              required
-              className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label
-              htmlFor="dateOfBirth"
-              className="text-gray-700 font-semibold mb-2"
-            >
-              Tanggal Lahir
-            </label>
-            <input
-              id="dateOfBirth"
-              name="dateOfBirth"
-              type="date"
-              value={form.dateOfBirth}
-              onChange={handleInputChange}
-              required
-              className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <span className="text-base text-gray-600 mt-1">
-              Usia: <strong>{calculateAge(form.dateOfBirth)}</strong> tahun
+      {/* Info header */}
+      {patient && !loading && (
+        <div className="bg-white border rounded-lg shadow-sm px-4 py-3 mb-4">
+          <div className="flex items-center gap-2 mb-1 min-w-0">
+            <h2 className="font-bold text-gray-800 text-base truncate flex-1 min-w-0">
+              {patient.name}
+            </h2>
+            <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
+              patient.gender === "Male"
+                ? "bg-blue-100 text-blue-700"
+                : "bg-pink-100 text-pink-700"
+            }`}>
+              {patient.gender === "Male" ? "Laki-laki" : "Perempuan"}
             </span>
           </div>
-
-          <div className="flex flex-col">
-            <label
-              htmlFor="address"
-              className="text-gray-700 font-semibold mb-2"
-            >
-              Alamat
-            </label>
-            <input
-              id="address"
-              name="address"
-              value={form.address}
-              onChange={handleInputChange}
-              className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label
-              htmlFor="gender"
-              className="text-gray-700 font-semibold mb-2"
-            >
-              Jenis Kelamin
-            </label>
-            <div className="relative">
-              <select
-                id="gender"
-                name="gender"
-                value={form.gender}
-                onChange={handleInputChange}
-                className="appearance-none p-2 border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
-              >
-                <option value="Male">Laki-laki</option>
-                <option value="Female">Perempuan</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg
-                  className="h-4 w-4 text-gray-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 20 20"
-                  stroke="currentColor"
-                >
-                  <path
-                    d="M7 7l3-3 3 3m0 6l-3 3-3-3"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Display diagnosis */}
-          <div className="flex flex-col">
-            <label className="text-gray-700 font-semibold mb-2">
-              Diagnosis Pasien
-            </label>
-            <div className="p-2 border rounded-md bg-gray-100 text-gray-600">
-              {renderPatientDiagnosis()}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-semibold transition"
-          >
-            Simpan Perubahan
-          </button>
-        </form>
-      ) : (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Daftar Kunjungan
-            </h2>
-            <button
-              onClick={handleOpenAddVisit}
-              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base px-4 py-2 rounded-md w-full sm:w-auto"
-            >
-              <FaPlus />
-              Tambah Kunjungan
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {patient.visits.length === 0 ? (
-              <p className="text-gray-500 text-sm sm:text-base">
-                Belum ada kunjungan.
-              </p>
-            ) : (
-              patient.visits.map((visit, index) => (
-                <div
-                  key={index}
-                  className="bg-white p-4 rounded-md shadow-sm flex flex-col sm:flex-row sm:justify-between sm:items-center"
-                >
-                  <div className="space-y-1 text-gray-700 text-sm sm:text-base">
-                    <p className="font-semibold">
-                      {new Date(visit.date).toLocaleDateString()}
-                    </p>
-                    <p>Keluhan: {visit.complaint}</p>
-                    <p>
-                      Diagnosis:{" "}
-                      {Array.isArray(visit.visitDiagnosisIds) &&
-                      visit.visitDiagnosisIds.length > 0
-                        ? visit.visitDiagnosisIds
-                            .map((id) => diagnosisMap[id] || id)
-                            .join(", ")
-                        : Array.isArray(visit.visitDiagnosis) &&
-                          visit.visitDiagnosis.length > 0
-                        ? visit.visitDiagnosis.join(", ")
-                        : "-"}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2 mt-4 sm:mt-0 flex-wrap justify-end">
-                    <button
-                      onClick={() => handleOpenEditVisit(visit, index)}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-white px-3 sm:px-4 py-2 rounded-md text-sm flex items-center gap-2"
-                    >
-                      <FaEdit />
-                      Lihat
-                    </button>
-                    <button
-                      onClick={() => handleDeleteVisit(index)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm flex items-center gap-2"
-                    >
-                      <FaTrash />
-                      Hapus
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+          <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
+            <span>Umur: <strong className="text-gray-700">{calculateAge(patient.dateOfBirth)} tahun</strong></span>
+            <span>Kunjungan: <strong className="text-gray-700">{patient.visits?.length || 0}x</strong></span>
           </div>
         </div>
       )}
 
-      {/* Tombol kembali bawah (tetap) */}
-      <div className="flex justify-center mt-2">
-        <button
-          onClick={() => router.push("/dashboard/patients")}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
-        >
-          <FaArrowLeft /> Kembali
-        </button>
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
+        {[
+          { key: "data", label: "Edit Data", icon: <FaUserEdit /> },
+          { key: "visits", label: "Kunjungan", icon: <FaClipboardList /> },
+        ].map(({ key, label, icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm whitespace-nowrap rounded-t-md transition-all ${
+              activeTab === key
+                ? "bg-blue-100 text-blue-700 border-b-2 border-blue-600"
+                : "text-gray-600 hover:text-blue-600"
+            }`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div>
+        {loading ? (
+          <div className="flex justify-center items-center h-60">
+            <div className="w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
+          </div>
+        ) : !patient ? (
+          <div className="text-center text-red-500">Data pasien tidak ditemukan.</div>
+        ) : activeTab === "data" ? (
+          /* ── Edit Form ── */
+          <form onSubmit={handleUpdatePatient} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+            <div className="bg-blue-50 border-b border-blue-100 px-5 py-4">
+              <h2 className="text-base font-bold text-blue-800">Edit Data Pasien</h2>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Nama + Jenis Kelamin */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="name" className="text-sm font-semibold text-gray-700">
+                    Nama Pasien <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    value={form.name}
+                    onChange={handleInputChange}
+                    required
+                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="gender" className="text-sm font-semibold text-gray-700">
+                    Jenis Kelamin
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={form.gender}
+                      onChange={handleInputChange}
+                      className="appearance-none p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
+                    >
+                      <option value="Male">Laki-laki</option>
+                      <option value="Female">Perempuan</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                      <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+                        <path d="M7 7l3-3 3 3m0 6l-3 3-3-3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tanggal Lahir + Alamat */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="dateOfBirth" className="text-sm font-semibold text-gray-700">
+                    Tanggal Lahir <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={handleInputChange}
+                    required
+                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  {form.dateOfBirth && (
+                    <span className="text-xs text-gray-500 mt-0.5">
+                      Usia: <strong className="text-gray-700">{calculateAge(form.dateOfBirth)}</strong> tahun
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="address" className="text-sm font-semibold text-gray-700">
+                    Alamat
+                  </label>
+                  <input
+                    id="address"
+                    name="address"
+                    value={form.address}
+                    onChange={handleInputChange}
+                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+              </div>
+
+              {/* Diagnosis (readonly) */}
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700">Diagnosis Pasien</label>
+                <div className="flex flex-wrap gap-1.5 p-2.5 border border-gray-200 rounded-md bg-gray-50 min-h-[42px] items-center">
+                  {getPatientDiagnosisLabels().length > 0 ? (
+                    getPatientDiagnosisLabels().map((d, i) => (
+                      <span key={i} className="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        {d}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-400 text-sm">Belum ada diagnosis</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 pb-5">
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-md font-semibold transition"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* ── Visit Tab ── */
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h2 className="text-lg font-semibold text-gray-800">Riwayat Kunjungan</h2>
+              <button
+                onClick={handleOpenAddVisit}
+                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md w-full sm:w-auto"
+              >
+                <FaPlus /> Tambah Kunjungan
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {(patient.visits || []).length === 0 ? (
+                <p className="text-gray-500 text-sm">Belum ada kunjungan.</p>
+              ) : (
+                patient.visits.map((visit, index) => {
+                  const diagLabels = getDiagnosisLabels(visit);
+                  return (
+                    <div
+                      key={index}
+                      className="bg-white border rounded-lg shadow-sm overflow-hidden"
+                    >
+                      {/* Card header */}
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-blue-50 border-b">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            #{index + 1}
+                          </span>
+                          <span className="text-sm font-semibold text-gray-700">
+                            {fmtDate(visit.date)}
+                          </span>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => handleOpenEditVisit(visit, index)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
+                          >
+                            <FaEdit /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteVisit(index)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card body */}
+                      <div className="px-4 py-3 space-y-2 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                          {visit.complaint && (
+                            <DataItem label="Keluhan" value={visit.complaint} />
+                          )}
+                          {visit.notes && (
+                            <DataItem label="Catatan" value={visit.notes} />
+                          )}
+                        </div>
+                        {diagLabels.length > 0 && (
+                          <div>
+                            <span className="text-xs text-gray-400 uppercase tracking-wide">Diagnosis</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {diagLabels.map((d, i) => (
+                                <span key={i} className="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                  {d}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <VisitModal

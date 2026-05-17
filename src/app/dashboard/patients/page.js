@@ -104,7 +104,7 @@ export default function DashboardPatientsPage() {
           placeholder="Cari nama pasien..."
           value={search}
           onChange={handleSearchChange}
-          className="flex-1 p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <div className="relative w-full sm:w-48">
           <select
@@ -113,10 +113,10 @@ export default function DashboardPatientsPage() {
               setSort(e.target.value);
               setPage(1);
             }}
-            className="appearance-none w-full p-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
+            className="appearance-none w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
           >
-            <option value="name">Urutkan Nama</option>
-            <option value="gender">Urutkan Jenis Kelamin</option>
+            <option value="name">Nama A–Z</option>
+            <option value="gender">Jenis Kelamin</option>
           </select>
           {/* Custom arrow */}
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -141,18 +141,18 @@ export default function DashboardPatientsPage() {
       {/* Table (Desktop) */}
       <div className="hidden sm:block overflow-x-auto bg-white rounded-md shadow-md">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
+          <thead className="bg-blue-50 border-b border-blue-100">
             <tr>
-              <th className="py-4 px-6 text-left font-semibold text-gray-700">
+              <th className="py-3.5 px-6 text-left text-xs font-semibold text-blue-800 uppercase tracking-wide">
                 Nama
               </th>
-              <th className="py-4 px-6 text-left font-semibold text-gray-700">
+              <th className="py-3.5 px-6 text-left text-xs font-semibold text-blue-800 uppercase tracking-wide">
                 Umur
               </th>
-              <th className="py-4 px-6 text-left font-semibold text-gray-700">
+              <th className="py-3.5 px-6 text-left text-xs font-semibold text-blue-800 uppercase tracking-wide">
                 Jenis Kelamin
               </th>
-              <th className="py-4 px-6 text-center font-semibold text-gray-700">
+              <th className="py-3.5 px-6 text-center text-xs font-semibold text-blue-800 uppercase tracking-wide">
                 Aksi
               </th>
             </tr>
@@ -242,32 +242,27 @@ export default function DashboardPatientsPage() {
           patients.map((patient) => (
             <div
               key={patient._id}
-              className="bg-white border rounded-lg shadow p-4 space-y-3"
+              className="bg-white border-l-4 border-blue-500 rounded-lg shadow-sm p-4 space-y-2"
             >
-              <h2 className="text-lg font-semibold text-gray-800">
-                {patient.name}
-              </h2>
-              <p className="text-gray-600">
-                Umur: {calculateAge(patient.dateOfBirth)} Tahun
-              </p>
-              <p className="text-gray-600">
-                Jenis Kelamin:{" "}
-                {patient.gender === "Male" ? "Laki-laki" : "Perempuan"}
-              </p>
-              <div className="flex gap-2 mt-4">
+              <h2 className="text-base font-bold text-gray-800">{patient.name}</h2>
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500">
+                <span>{calculateAge(patient.dateOfBirth)} tahun</span>
+                <span>{patient.gender === "Male" ? "Laki-laki" : "Perempuan"}</span>
+              </div>
+              <div className="flex gap-2 pt-2">
                 <Link
                   href={`/dashboard/patients/${patient._id}`}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   <FaEye />
-                  <span>Lihat</span>
+                  Lihat
                 </Link>
                 <button
                   onClick={() => handleDelete(patient._id)}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm"
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   <FaTrash />
-                  <span>Hapus</span>
+                  Hapus
                 </button>
               </div>
             </div>
@@ -277,41 +272,37 @@ export default function DashboardPatientsPage() {
 
       {/* Pagination */}
       {patients.length > 0 && (
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-10">
+        <div className="flex items-center justify-center gap-1.5 mt-10">
           <button
             onClick={() => setPage(1)}
             disabled={page === 1 || loading}
-            className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
+            className="p-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 transition shadow-sm"
           >
-            <ChevronsLeft className="w-6 h-6 sm:w-5 sm:h-5" />
+            <ChevronsLeft className="w-4 h-4 text-gray-600" />
           </button>
-
           <button
             onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
             disabled={page === 1 || loading}
-            className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
+            className="p-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 transition shadow-sm"
           >
-            <ChevronLeft className="w-6 h-6 sm:w-5 sm:h-5" />
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
           </button>
-
-          <div className="text-base sm:text-sm font-semibold text-gray-700">
-            {page}/{totalPages}
-          </div>
-
+          <span className="px-3 py-1.5 rounded-md border border-gray-200 bg-white text-sm font-semibold text-gray-700 shadow-sm min-w-[60px] text-center">
+            {page} / {totalPages}
+          </span>
           <button
             onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={page === totalPages || loading}
-            className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
+            className="p-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 transition shadow-sm"
           >
-            <ChevronRight className="w-6 h-6 sm:w-5 sm:h-5" />
+            <ChevronRight className="w-4 h-4 text-gray-600" />
           </button>
-
           <button
             onClick={() => setPage(totalPages)}
             disabled={page === totalPages || loading}
-            className="p-3 sm:p-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50 transition"
+            className="p-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 transition shadow-sm"
           >
-            <ChevronsRight className="w-6 h-6 sm:w-5 sm:h-5" />
+            <ChevronsRight className="w-4 h-4 text-gray-600" />
           </button>
         </div>
       )}

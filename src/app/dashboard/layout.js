@@ -10,6 +10,7 @@ import {
   FaTachometerAlt,
   FaUserInjured,
   FaHeartbeat,
+  FaBaby,
 } from "react-icons/fa";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +26,7 @@ export default function DashboardLayout({ children }) {
     { href: "/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
     { href: "/dashboard/patients", label: "Pasien", icon: <FaUserInjured /> },
     { href: "/dashboard/kb", label: "KB", icon: <FaHeartbeat /> },
+    { href: "/dashboard/kehamilan", label: "Kehamilan", icon: <FaBaby /> },
     { href: "/dashboard/config", label: "Konfigurasi", icon: <Settings2 /> },
   ];
 
