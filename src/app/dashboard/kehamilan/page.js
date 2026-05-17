@@ -15,6 +15,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   X,
+  Search,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -181,10 +182,15 @@ export default function DashboardKehamilanPage() {
     <div className="sm:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <FaBaby className="text-rose-600" />
-          Daftar Kehamilan
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center shadow-sm shrink-0">
+            <FaBaby size={17} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800 leading-tight">Daftar Kehamilan</h1>
+            <p className="text-gray-500 text-xs mt-0.5">Monitoring ANC, jadwal kunjungan, dan HPL ibu hamil</p>
+          </div>
+        </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={() => setExportOpen(true)}
@@ -253,13 +259,16 @@ export default function DashboardKehamilanPage() {
         </div>
       )}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="Cari nama / NIK..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-        />
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Cari nama / NIK..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
+          />
+        </div>
         <select
           value={status}
           onChange={(e) => { setFilter(""); setStatus(e.target.value); setPage(1); }}

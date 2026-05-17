@@ -1,13 +1,126 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { FaUsers, FaHeartbeat, FaBaby, FaChevronRight } from "react-icons/fa";
+import { Settings2 } from "lucide-react";
+import { fetcher } from "@/lib/fetcher";
+
+const modules = [
+  {
+    href: "/dashboard/patients",
+    icon: FaUsers,
+    label: "Pasien",
+    description: "Kelola data pasien dan riwayat kunjungan pemeriksaan",
+    color: "blue",
+    iconBg: "bg-blue-600",
+    cardBg: "bg-blue-50 hover:bg-blue-100/70",
+    border: "border-blue-200",
+    text: "text-blue-700",
+    sub: "text-blue-500",
+  },
+  {
+    href: "/dashboard/kb",
+    icon: FaHeartbeat,
+    label: "KB",
+    description: "Data keluarga berencana dan kunjungan akseptor KB",
+    color: "purple",
+    iconBg: "bg-purple-600",
+    cardBg: "bg-purple-50 hover:bg-purple-100/70",
+    border: "border-purple-200",
+    text: "text-purple-700",
+    sub: "text-purple-500",
+  },
+  {
+    href: "/dashboard/kehamilan",
+    icon: FaBaby,
+    label: "Kehamilan",
+    description: "Monitoring ANC, jadwal kunjungan, dan HPL ibu hamil",
+    color: "rose",
+    iconBg: "bg-rose-600",
+    cardBg: "bg-rose-50 hover:bg-rose-100/70",
+    border: "border-rose-200",
+    text: "text-rose-700",
+    sub: "text-rose-500",
+  },
+  {
+    href: "/dashboard/config",
+    icon: Settings2,
+    label: "Konfigurasi",
+    description: "Master data diagnosis dan kode referensi sistem",
+    color: "slate",
+    iconBg: "bg-slate-600",
+    cardBg: "bg-slate-50 hover:bg-slate-100/70",
+    border: "border-slate-200",
+    text: "text-slate-700",
+    sub: "text-slate-500",
+  },
+];
+
+const statCards = [
+  {
+    key: "patients",
+    icon: FaUsers,
+    label: "Pasien",
+    colorClass: "bg-blue-50 border-blue-200 text-blue-700",
+    href: "/dashboard/patients",
+  },
+  {
+    key: "kb",
+    icon: FaHeartbeat,
+    label: "KB",
+    colorClass: "bg-purple-50 border-purple-200 text-purple-700",
+    href: "/dashboard/kb",
+  },
+  {
+    key: "kehamilan",
+    icon: FaBaby,
+    label: "Kehamilan",
+    colorClass: "bg-rose-50 border-rose-200 text-rose-700",
+    href: "/dashboard/kehamilan",
+  },
+];
+
+function StatCard({ icon: Icon, label, value, colorClass, href }) {
+  return (
+    <Link
+      href={href}
+      className={`group flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border text-center transition-all duration-150 hover:shadow-md ${colorClass}`}
+    >
+      <Icon size={16} className="opacity-70" />
+      {value !== null ? (
+        <p className="text-2xl font-bold leading-none font-mono">{value}</p>
+      ) : (
+        <div className="h-6 w-8 rounded bg-current opacity-10 animate-pulse" />
+      )}
+      <p className="text-xs font-medium opacity-60 leading-tight">{label}</p>
+    </Link>
+  );
+}
 
 export default function DashboardHomePage() {
   const [now, setNow] = useState(new Date());
+  const [stats, setStats] = useState({ patients: null, kb: null, kehamilan: null });
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    Promise.all([
+      fetcher("/api/patients?limit=1&page=1"),
+      fetcher("/api/kb?limit=1&page=1"),
+      fetcher("/api/kehamilan?limit=1&page=1"),
+    ])
+      .then(([p, k, kh]) => {
+        setStats({
+          patients: p?.totalPages ?? 0,
+          kb: k?.totalPages ?? 0,
+          kehamilan: kh?.totalPages ?? 0,
+        });
+      })
+      .catch(() => {});
   }, []);
 
   const greeting = useMemo(() => {
@@ -18,96 +131,73 @@ export default function DashboardHomePage() {
     return "Selamat Malam";
   }, [now]);
 
-  const timeText = useMemo(() => {
-    return now.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  }, [now]);
+  const timeText = useMemo(
+    () => now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+    [now]
+  );
 
-  const dateText = useMemo(() => {
-    return now.toLocaleDateString("id-ID", {
-      weekday: "long",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  }, [now]);
+  const dateText = useMemo(
+    () => now.toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }),
+    [now]
+  );
 
   return (
-    <div className="bg-white text-gray-800 p-4 sm:p-6 rounded-md shadow">
-      {/* Top */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold leading-tight">
-            {greeting} 👋
-            <span className="block text-base sm:text-lg font-semibold text-gray-800 mt-1">
-              Selamat datang di Dashboard Klinik Iya
-            </span>
-          </h1>
-
-          <p className="text-gray-600 mt-2 text-sm sm:text-base leading-relaxed text-balance">
-            Kelola data pasien, kunjungan, KB, dan master data dengan cepat dari
-            menu sidebar.
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 text-xs sm:text-sm font-semibold">
-              💡 Tips: Gunakan kolom pencarian untuk menemukan data lebih cepat
-            </span>
-            <span className="inline-flex items-center rounded-full bg-green-50 text-green-700 border border-green-200 px-3 py-1 text-xs sm:text-sm font-semibold">
-              ✅ Simpan perubahan setelah selesai mengedit data
-            </span>
+    <div className="sm:p-8 max-w-7xl mx-auto space-y-5">
+      {/* Welcome banner */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 shadow-lg">
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: "radial-gradient(circle at 80% 20%, #3b82f6 0%, transparent 60%)" }}
+        />
+        <div className="relative px-5 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">{dateText}</p>
+            <h1 className="text-white text-xl font-bold">{greeting} 👋</h1>
+            <p className="text-slate-400 text-sm mt-0.5">Sistem Manajemen Klinik Iya</p>
           </div>
-        </div>
-
-        {/* Clock */}
-        <div className="w-full md:w-[280px]">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 sm:px-5 sm:py-4">
-            <div className="text-xs sm:text-sm text-gray-600">{dateText}</div>
-            <div className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 tracking-tight">
-              {timeText}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Waktu lokal perangkat Anda
-            </div>
+          <div className="shrink-0 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-right backdrop-blur-sm">
+            <p className="text-slate-400 text-xs">Waktu sekarang</p>
+            <p className="text-white text-2xl font-bold tracking-tight font-mono">{timeText}</p>
           </div>
         </div>
       </div>
 
-      {/* Cards */}
-      <div className="mt-6 border-t pt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-gray-200 p-4">
-            <div className="text-xs text-gray-500">Fokus Hari Ini</div>
-            <div className="font-semibold text-gray-800 mt-1">
-              Pemeriksaan & Kunjungan
-            </div>
-            <div className="text-sm text-gray-600 mt-1 leading-relaxed">
-              Pastikan kunjungan tercatat lengkap agar laporan rapi.
-            </div>
-          </div>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {statCards.map((s) => (
+          <StatCard
+            key={s.key}
+            icon={s.icon}
+            label={s.label}
+            value={stats[s.key]}
+            colorClass={s.colorClass}
+            href={s.href}
+          />
+        ))}
+      </div>
 
-          <div className="rounded-lg border border-gray-200 p-4">
-            <div className="text-xs text-gray-500">Akses Cepat</div>
-            <div className="font-semibold text-gray-800 mt-1">
-              Pasien • KB • Config
-            </div>
-            <div className="text-sm text-gray-600 mt-1 leading-relaxed">
-              Gunakan sidebar untuk pindah modul dengan cepat.
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 p-4">
-            <div className="text-xs text-gray-500">Catatan</div>
-            <div className="font-semibold text-gray-800 mt-1">
-              Data & Export Bulanan
-            </div>
-            <div className="text-sm text-gray-600 mt-1 leading-relaxed">
-              Export bisa dibuat per bulan untuk kebutuhan rekap.
-            </div>
-          </div>
+      {/* Module grid */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-0.5">Modul Aktif</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {modules.map((m) => {
+            const Icon = m.icon;
+            return (
+              <Link
+                key={m.href}
+                href={m.href}
+                className={`group flex items-center gap-4 p-4 rounded-xl border transition-all duration-150 ${m.cardBg} ${m.border} hover:shadow-md`}
+              >
+                <div className={`${m.iconBg} text-white w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm`}>
+                  <Icon size={20} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={`font-bold text-sm ${m.text}`}>{m.label}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-1">{m.description}</p>
+                </div>
+                <FaChevronRight className={`shrink-0 text-xs ${m.sub} transition-transform duration-150 group-hover:translate-x-0.5`} />
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

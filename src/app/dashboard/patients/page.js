@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetcher } from "@/lib/fetcher";
-import { FaEye, FaTrash, FaUserInjured } from "react-icons/fa";
+import { FaEye, FaTrash, FaUsers } from "react-icons/fa";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Search,
 } from "lucide-react";
 
 export default function DashboardPatientsPage() {
@@ -84,11 +85,16 @@ export default function DashboardPatientsPage() {
   return (
     <div className="sm:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0 flex items-center gap-2">
-          <FaUserInjured className="text-blue-600" />
-          Daftar Pasien
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm shrink-0">
+            <FaUsers size={17} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800 leading-tight">Daftar Pasien</h1>
+            <p className="text-gray-500 text-xs mt-0.5">Kelola data pasien dan riwayat kunjungan</p>
+          </div>
+        </div>
         <Link
           href="/dashboard/patients/new"
           className="w-full sm:w-auto inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-md text-center transition"
@@ -99,13 +105,16 @@ export default function DashboardPatientsPage() {
 
       {/* Search and Sort */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
-        <input
-          type="text"
-          placeholder="Cari nama pasien..."
-          value={search}
-          onChange={handleSearchChange}
-          className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Cari nama pasien..."
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
         <div className="relative w-full sm:w-48">
           <select
             value={sort}
@@ -177,8 +186,10 @@ export default function DashboardPatientsPage() {
               ))
             ) : patients.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center py-10 text-gray-500">
-                  Tidak ada pasien ditemukan.
+                <td colSpan="4" className="py-12 text-center">
+                  <FaUsers size={28} className="mx-auto text-gray-200 mb-2" />
+                  <p className="text-sm font-medium text-gray-400">Tidak ada pasien ditemukan.</p>
+                  <p className="text-xs text-gray-300 mt-0.5">Coba ubah pencarian atau tambah data baru.</p>
                 </td>
               </tr>
             ) : (
@@ -235,8 +246,10 @@ export default function DashboardPatientsPage() {
             </div>
           ))
         ) : patients.length === 0 ? (
-          <div className="text-center text-gray-500 mt-10">
-            Tidak ada pasien ditemukan.
+          <div className="text-center py-12">
+            <FaUsers size={32} className="mx-auto text-gray-200 mb-2" />
+            <p className="text-sm font-medium text-gray-400">Tidak ada pasien ditemukan.</p>
+            <p className="text-xs text-gray-300 mt-0.5">Coba ubah pencarian atau tambah data baru.</p>
           </div>
         ) : (
           patients.map((patient) => (

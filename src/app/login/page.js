@@ -11,9 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,107 +24,116 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-100 to-white">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white p-6 sm:p-8 rounded-lg shadow-lg space-y-6"
-      >
-        {/* 🏥 Logo Klinik */}
-        <div className="flex justify-center">
-          <img
-            src="/icons/icon-192x192.png"
-            alt="Logo Klinik"
-            className="w-40 h-40 object-contain "
-          />
-        </div>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Decorative blob */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl" />
+      </div>
 
-        {/* ✨ Welcome Title */}
-        <h1 className="text-2xl sm:text-3xl font-bold text-center text-blue-700">
-          Selamat Datang
-        </h1>
-        <p className="text-center text-gray-500 text-sm">
-          Silakan masuk ke akun admin Anda.
-        </p>
-
-        {/* Username */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="username" className="text-gray-700 font-semibold">
-            Username
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-              <FaUser />
-            </span>
-            <input
-              id="username"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              placeholder="Masukkan username"
-              className="w-full pl-10 pr-3 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Password with toggle */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="text-gray-700 font-semibold">
-            Password
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-              <FaLock />
-            </span>
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Masukkan password"
-              className="w-full pl-10 pr-10 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-            <span
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 cursor-pointer"
-              onClick={() => setShowPassword((prev) => !prev)}
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </span>
-          </div>
-        </div>
-
-        {/* Remember Me */}
-        <div className="flex items-center gap-2">
-          <input
-            id="rememberMe"
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label htmlFor="rememberMe" className="text-gray-600 text-sm">
-            Ingat Saya
-          </label>
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md transition disabled:opacity-70"
+      <div className="relative w-full max-w-sm">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-2xl shadow-2xl overflow-hidden"
         >
-          {loading ? (
-            <>
-              <FaSpinner className="animate-spin" />
-              Loading...
-            </>
-          ) : (
-            "Masuk"
-          )}
-        </button>
-      </form>
+          {/* Top accent bar */}
+          <div className="h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-rose-500" />
+
+          <div className="p-7 space-y-5">
+            {/* Logo + title */}
+            <div className="flex flex-col items-center gap-3 mb-2">
+              <div className="w-14 h-14 rounded-2xl bg-blue-600 shadow-lg flex items-center justify-center">
+                <img src="/icons/icon-192x192.png" alt="Logo" className="w-9 h-9 object-contain" />
+              </div>
+              <div className="text-center">
+                <h1 className="text-xl font-bold text-gray-800">Klinik Iya</h1>
+                <p className="text-gray-400 text-sm">Silakan masuk ke akun admin</p>
+              </div>
+            </div>
+
+            {/* Username */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="username" className="text-sm font-semibold text-gray-700">
+                Username
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                  <FaUser size={14} />
+                </span>
+                <input
+                  id="username"
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  placeholder="Masukkan username"
+                  autoComplete="username"
+                  required
+                  className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                Password
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                  <FaLock size={14} />
+                </span>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Masukkan password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition"
+                >
+                  {showPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember me */}
+            <div className="flex items-center gap-2">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="rememberMe" className="text-gray-500 text-sm select-none cursor-pointer">
+                Ingat Saya
+              </label>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-60 shadow-sm"
+            >
+              {loading ? (
+                <><FaSpinner className="animate-spin" size={14} /> Memproses...</>
+              ) : "Masuk"}
+            </button>
+          </div>
+        </form>
+
+        <p className="text-center text-slate-500 text-xs mt-4">
+          © {new Date().getFullYear()} Klinik Iya
+        </p>
+      </div>
     </div>
   );
 }

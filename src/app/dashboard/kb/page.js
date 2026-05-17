@@ -10,6 +10,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   X,
+  Search,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -149,10 +150,15 @@ export default function DashboardKbPage() {
     <div className="sm:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-3">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <FaHeartbeat className="text-purple-600" />
-          Daftar KB
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-sm shrink-0">
+            <FaHeartbeat size={17} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800 leading-tight">Daftar KB</h1>
+            <p className="text-gray-500 text-xs mt-0.5">Data keluarga berencana dan kunjungan akseptor</p>
+          </div>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
@@ -174,13 +180,16 @@ export default function DashboardKbPage() {
 
       {/* Search */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
-        <input
-          type="text"
-          placeholder="Cari nama..."
-          value={search}
-          onChange={handleSearchChange}
-          className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
-        />
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Cari nama..."
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+          />
+        </div>
         <div className="relative w-full sm:w-48">
           <select
             value={sort}
@@ -257,8 +266,10 @@ export default function DashboardKbPage() {
               ))
             ) : kbList.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center py-10 text-gray-500">
-                  Tidak ada data KB ditemukan.
+                <td colSpan="5" className="py-12 text-center">
+                  <FaHeartbeat size={28} className="mx-auto text-gray-200 mb-2" />
+                  <p className="text-sm font-medium text-gray-400">Tidak ada data KB ditemukan.</p>
+                  <p className="text-xs text-gray-300 mt-0.5">Coba ubah pencarian atau tambah data baru.</p>
                 </td>
               </tr>
             ) : (
@@ -324,8 +335,10 @@ export default function DashboardKbPage() {
             </div>
           ))
         ) : kbList.length === 0 ? (
-          <div className="text-center text-gray-500 mt-10">
-            Tidak ada data KB ditemukan.
+          <div className="text-center py-12">
+            <FaHeartbeat size={32} className="mx-auto text-gray-200 mb-2" />
+            <p className="text-sm font-medium text-gray-400">Tidak ada data KB ditemukan.</p>
+            <p className="text-xs text-gray-300 mt-0.5">Coba ubah pencarian atau tambah data baru.</p>
           </div>
         ) : (
           kbList.map((kb) => (
