@@ -101,7 +101,11 @@ export default function KbVisitsTab({ kb, onRefresh }) {
     }
   };
 
-  const visits = kb.visits || [];
+  const rawVisits = kb.visits || [];
+  const displayVisits = [...rawVisits]
+    .map((v, origIndex) => ({ ...v, origIndex }))
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .map((v, displayPos, arr) => ({ ...v, seqNo: arr.length - displayPos }));
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -118,19 +122,19 @@ export default function KbVisitsTab({ kb, onRefresh }) {
 
       {/* Visit list */}
       <div className="space-y-3">
-        {visits.length === 0 ? (
+        {displayVisits.length === 0 ? (
           <p className="text-gray-500 text-sm">Belum ada kunjungan.</p>
         ) : (
-          visits.map((visit, index) => (
+          displayVisits.map((visit) => (
             <div
-              key={index}
+              key={visit.origIndex}
               className="bg-white border rounded-lg shadow-sm overflow-hidden"
             >
               {/* Card header */}
               <div className="flex items-center justify-between px-4 py-2.5 bg-purple-50 border-b">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    #{index + 1}
+                    #{visit.seqNo}
                   </span>
                   <span className="text-sm font-semibold text-gray-700">
                     {fmtDate(visit.date)}
@@ -143,13 +147,13 @@ export default function KbVisitsTab({ kb, onRefresh }) {
                 </div>
                 <div className="flex gap-1.5">
                   <button
-                    onClick={() => handleOpenEditVisit(visit, index)}
+                    onClick={() => handleOpenEditVisit(visit, visit.origIndex)}
                     className="bg-purple-500 hover:bg-purple-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
                   >
                     <FaEdit /> Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteVisit(index)}
+                    onClick={() => handleDeleteVisit(visit.origIndex)}
                     className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
                   >
                     <FaTrash />

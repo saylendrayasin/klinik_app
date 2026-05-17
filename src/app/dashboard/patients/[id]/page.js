@@ -386,18 +386,22 @@ export default function DashboardPatientDetailPage() {
               {(patient.visits || []).length === 0 ? (
                 <p className="text-gray-500 text-sm">Belum ada kunjungan.</p>
               ) : (
-                patient.visits.map((visit, index) => {
+                [...(patient.visits || [])]
+                  .map((v, origIndex) => ({ ...v, origIndex }))
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .map((visit, displayPos, arr) => {
+                  const seqNo = arr.length - displayPos;
                   const diagLabels = getDiagnosisLabels(visit);
                   return (
                     <div
-                      key={index}
+                      key={visit.origIndex}
                       className="bg-white border rounded-lg shadow-sm overflow-hidden"
                     >
                       {/* Card header */}
                       <div className="flex items-center justify-between px-4 py-2.5 bg-blue-50 border-b">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                            #{index + 1}
+                            #{seqNo}
                           </span>
                           <span className="text-sm font-semibold text-gray-700">
                             {fmtDate(visit.date)}
@@ -405,13 +409,13 @@ export default function DashboardPatientDetailPage() {
                         </div>
                         <div className="flex gap-1.5">
                           <button
-                            onClick={() => handleOpenEditVisit(visit, index)}
+                            onClick={() => handleOpenEditVisit(visit, visit.origIndex)}
                             className="bg-blue-500 hover:bg-blue-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
                           >
                             <FaEdit /> Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteVisit(index)}
+                            onClick={() => handleDeleteVisit(visit.origIndex)}
                             className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
                           >
                             <FaTrash />
