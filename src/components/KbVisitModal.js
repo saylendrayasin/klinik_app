@@ -63,9 +63,12 @@ export default function KbVisitModal({
     if (updatedForm.date && updatedForm.metode) {
       const selected = metodeList.find((m) => m.value === updatedForm.metode);
       if (selected) {
-        const kunjunganDate = new Date(updatedForm.date);
-        kunjunganDate.setDate(kunjunganDate.getDate() + selected.days);
-        updatedForm.returnDate = kunjunganDate.toISOString().slice(0, 10);
+        const d = new Date(`${updatedForm.date}T00:00:00`);
+        d.setDate(d.getDate() + selected.days);
+        const y = d.getFullYear();
+        const mo = String(d.getMonth() + 1).padStart(2, "0");
+        const dy = String(d.getDate()).padStart(2, "0");
+        updatedForm.returnDate = `${y}-${mo}-${dy}`;
       }
     } else {
       updatedForm.returnDate = "";
@@ -83,14 +86,11 @@ export default function KbVisitModal({
 
   if (!open) return null;
 
-  const formatDate = (dateStr) =>
-    dateStr
-      ? new Date(dateStr).toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })
-      : "-";
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    const [y, m, d] = dateStr.split("-");
+    return `${d}/${m}/${y}`;
+  };
 
   return (
     <AnimatePresence>
@@ -135,12 +135,7 @@ export default function KbVisitModal({
                 />
                 {form.date && (
                   <span className="text-sm text-gray-500 mt-1">
-                    Format:
-                    {new Date(form.date).toLocaleDateString("id-ID", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
+                    {formatDate(form.date)}
                   </span>
                 )}
               </div>

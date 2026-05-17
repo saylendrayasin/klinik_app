@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
+import { format } from "date-fns";
 import KbVisitModal from "@/components/KbVisitModal";
+
+const fmtDate = (dateStr) =>
+  dateStr ? format(new Date(dateStr), "dd/MM/yyyy") : "-";
 
 export default function KbVisitsTab({ kb, onRefresh }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -112,22 +116,10 @@ export default function KbVisitsTab({ kb, onRefresh }) {
             >
               <div className="space-y-1 text-gray-700 text-sm sm:text-base">
                 <p className="font-semibold">
-                  Tanggal Datang:{" "}
-                  {new Date(visit.date).toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
+                  Tanggal Datang: {fmtDate(visit.date)}
                 </p>
                 {visit.returnDate && (
-                  <p>
-                    Tanggal Kembali:{" "}
-                    {new Date(visit.returnDate).toLocaleDateString("id-ID", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <p>Tanggal Kembali: {fmtDate(visit.returnDate)}</p>
                 )}
                 <p>Metode: {visit.metode}</p>
                 {visit.notes && <p>Catatan: {visit.notes}</p>}

@@ -13,10 +13,10 @@ export default function CalendarKb({ kb }) {
   useEffect(() => {
     if (kb?.visits) {
       const transformed = kb.visits
-        .flatMap((v) => [
-          { type: "datang", date: v.date, metode: v.metode },
+        .flatMap((v, idx) => [
+          { type: "datang", date: new Date(v.date), metode: v.metode, visitIdx: idx },
           v.returnDate
-            ? { type: "kembali", date: v.returnDate, metode: v.metode }
+            ? { type: "kembali", date: new Date(v.returnDate), metode: v.metode, visitIdx: idx }
             : null,
         ])
         .filter(Boolean);
@@ -53,10 +53,14 @@ export default function CalendarKb({ kb }) {
 
   const renderEventDetails = () => {
     const todayStr = format(selectedDate, "yyyy-MM-dd");
-    const matched = events.filter(
-      (e) => format(e.date, "yyyy-MM-dd") === todayStr
-    );
-    if (matched.length === 0) return null;
+
+    const matchedVisits = (kb?.visits || []).filter((v) => {
+      const datangStr = v.date ? format(new Date(v.date), "yyyy-MM-dd") : null;
+      const kembaliStr = v.returnDate ? format(new Date(v.returnDate), "yyyy-MM-dd") : null;
+      return datangStr === todayStr || kembaliStr === todayStr;
+    });
+
+    if (matchedVisits.length === 0) return null;
 
     return (
       <div className="mt-4 w-full rounded-lg bg-white p-5 shadow-md border border-gray-200">
@@ -66,41 +70,45 @@ export default function CalendarKb({ kb }) {
         </h3>
 
         <div className="space-y-4">
-          {matched.map((e, i) => {
-            const pair = events.find(
-              (ev) =>
-                ev.metode === e.metode &&
-                ev.type !== e.type &&
-                format(ev.date, "yyyy-MM-dd") !== todayStr
-            );
+          {matchedVisits.map((visit, i) => {
+            const datangStr = visit.date ? format(new Date(visit.date), "yyyy-MM-dd") : null;
+            const isDatangToday = datangStr === todayStr;
+            const type = isDatangToday ? "datang" : "kembali";
 
             return (
               <div
                 key={i}
                 className="flex items-start gap-4 border-l-4 pl-4 rounded-md py-2"
                 style={{
-                  borderColor: e.type === "datang" ? "#3b82f6" : "#ec4899",
-                  backgroundColor: e.type === "datang" ? "#eff6ff" : "#fdf2f8",
+                  borderColor: type === "datang" ? "#3b82f6" : "#ec4899",
+                  backgroundColor: type === "datang" ? "#eff6ff" : "#fdf2f8",
                 }}
               >
                 <div className="mt-0.5">
                   <div className="font-semibold text-sm text-gray-800">
-                    {e.type === "datang"
-                      ? "🟦 Tanggal Datang"
-                      : "🟣 Tanggal Kembali"}
+                    {type === "datang" ? "🟦 Tanggal Datang" : "🟣 Tanggal Kembali"}
                   </div>
                   <div className="text-sm text-gray-600 mt-0.5">
-                    Metode: <span className="font-medium">{e.metode}</span>
+                    Metode: <span className="font-medium">{visit.metode}</span>
                   </div>
-
-                  {pair && (
+                  {visit.notes && (
+                    <div className="text-sm text-gray-600 mt-0.5">
+                      Catatan: <span className="font-medium">{visit.notes}</span>
+                    </div>
+                  )}
+                  {type === "datang" && visit.returnDate && (
                     <div className="text-sm text-gray-500 mt-1 italic">
-                      {e.type === "datang"
-                        ? "Tanggal Kembali"
-                        : "Tanggal Datang"}
-                      :{" "}
+                      Tanggal Kembali:{" "}
                       <span className="font-bold">
-                        {format(pair.date, "dd MMMM yyyy", { locale: id })}
+                        {format(new Date(visit.returnDate), "dd MMMM yyyy", { locale: id })}
+                      </span>
+                    </div>
+                  )}
+                  {type === "kembali" && visit.date && (
+                    <div className="text-sm text-gray-500 mt-1 italic">
+                      Tanggal Datang:{" "}
+                      <span className="font-bold">
+                        {format(new Date(visit.date), "dd MMMM yyyy", { locale: id })}
                       </span>
                     </div>
                   )}
