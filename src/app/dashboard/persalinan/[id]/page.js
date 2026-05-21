@@ -153,18 +153,15 @@ export default function PersalinanDetailPage() {
     try {
       const res = await fetcher(`/api/persalinan/${params.id}`);
       setDoc(res.data);
+      setLoading(false);
 
       if (res.data?.nik) {
-        try {
-          const others = await fetcher(`/api/persalinan?nik=${encodeURIComponent(res.data.nik)}`);
-          setOtherRecords((others.data || []).filter((r) => r._id !== res.data._id));
-        } catch {
-          // tidak kritis
-        }
+        fetcher(`/api/persalinan?nik=${encodeURIComponent(res.data.nik)}`)
+          .then((others) => setOtherRecords((others.data || []).filter((r) => r._id !== res.data._id)))
+          .catch(() => {});
       }
     } catch (e) {
       console.error(e);
-    } finally {
       setLoading(false);
     }
   };

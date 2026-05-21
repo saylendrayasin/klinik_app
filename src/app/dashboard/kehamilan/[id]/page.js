@@ -121,20 +121,15 @@ export default function KehamilanDetailPage() {
           : "",
       });
 
-      // Cek kehamilan lain dengan NIK yang sama
+      setLoading(false);
+
       if (data.nik) {
-        try {
-          const others = await fetcher(`/api/kehamilan?nik=${encodeURIComponent(data.nik)}&limit=50`);
-          setOtherRecords(
-            (others.data || []).filter((r) => r._id !== data._id)
-          );
-        } catch {
-          // Tidak kritis
-        }
+        fetcher(`/api/kehamilan?nik=${encodeURIComponent(data.nik)}&limit=50`)
+          .then((others) => setOtherRecords((others.data || []).filter((r) => r._id !== data._id)))
+          .catch(() => {});
       }
     } catch (e) {
       console.error(e);
-    } finally {
       setLoading(false);
     }
   };

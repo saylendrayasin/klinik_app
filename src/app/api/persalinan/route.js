@@ -4,6 +4,28 @@ import { successResponse, paginatedResponse, errorResponse } from "@/lib/respons
 
 const ALLOWED_SORT = ["name", "tanggalPersalinan", "createdAt"];
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const KF_WINDOWS = [
+  { windowStart: 0, windowEnd: 2 },
+  { windowStart: 3, windowEnd: 7 },
+  { windowStart: 8, windowEnd: 28 },
+  { windowStart: 29, windowEnd: 42 },
+];
+
+function calcKfTerlewat(doc, today) {
+  if (!doc.tanggalPersalinan || doc.status !== "aktif") return false;
+  const tanggal = new Date(doc.tanggalPersalinan);
+  const hari = Math.floor((today - tanggal) / MS_PER_DAY);
+  if (hari < 0) return false;
+  return KF_WINDOWS.some((s) => {
+    if (hari <= s.windowEnd) return false;
+    return !(doc.visits || []).some((v) => {
+      const vh = Math.floor((new Date(v.date) - tanggal) / MS_PER_DAY);
+      return vh >= s.windowStart && vh <= s.windowEnd;
+    });
+  });
+}
+
 export async function GET(req) {
   try {
     await connectDB();
@@ -87,13 +109,22 @@ export async function GET(req) {
     }
 
     const sortOrder = sortField === "name" ? 1 : -1;
-    const data = await Persalinan.find(query)
-      .sort({ [sortField]: sortOrder })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const [rawData, totalData] = await Promise.all([
+      Persalinan.find(query)
+        .select("name nik dateOfBirth gravida para abortus tanggalPersalinan status komplikasiIbu bayi visits.date")
+        .sort({ [sortField]: sortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Persalinan.countDocuments(query),
+    ]);
 
-    const totalData = await Persalinan.countDocuments(query);
+    const today = new Date();
+    const data = rawData.map(({ visits, ...rest }) => ({
+      ...rest,
+      kfTerlewat: calcKfTerlewat({ ...rest, visits }, today),
+    }));
+
     const totalPages = Math.max(1, Math.ceil(totalData / limit));
 
     return paginatedResponse("Data persalinan berhasil diambil", data, page, totalPages);

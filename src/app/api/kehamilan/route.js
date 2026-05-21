@@ -68,13 +68,16 @@ export async function GET(req) {
     }
 
     const sortOrder = sortField === "createdAt" ? -1 : 1;
-    const data = await Kehamilan.find(query)
-      .sort({ [sortField]: sortOrder })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const [data, totalData] = await Promise.all([
+      Kehamilan.find(query)
+        .select("name nik dateOfBirth gravida para abortus hpht hpl status visits.date visits.jadwalBerikutnya")
+        .sort({ [sortField]: sortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Kehamilan.countDocuments(query),
+    ]);
 
-    const totalData = await Kehamilan.countDocuments(query);
     const totalPages = Math.max(1, Math.ceil(totalData / limit));
 
     return paginatedResponse("Data kehamilan berhasil diambil", data, page, totalPages);

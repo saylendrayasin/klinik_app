@@ -14,15 +14,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-const KF_SCHEDULE = [
-  { kf: 1, windowStart: 0, windowEnd: 2 },
-  { kf: 2, windowStart: 3, windowEnd: 7 },
-  { kf: 3, windowStart: 8, windowEnd: 28 },
-  { kf: 4, windowStart: 29, windowEnd: 42 },
-];
-
 function calcAge(dob) {
   if (!dob) return "-";
   const birth = new Date(dob);
@@ -47,27 +38,12 @@ function fmtDate(d) {
 }
 
 function getFlags(doc) {
-  const bblr = doc.bayi?.beratLahir != null && doc.bayi.beratLahir < 2500;
-  const apgarRendah = doc.bayi?.nilaiApgar5 != null && doc.bayi.nilaiApgar5 < 7;
-  const komplikasi = !!(doc.komplikasiIbu || doc.bayi?.komplikasiBayi);
-
-  let kfTerlewat = false;
-  if (doc.tanggalPersalinan && doc.status === "aktif") {
-    const today = new Date();
-    const hariToday = Math.floor((today - new Date(doc.tanggalPersalinan)) / MS_PER_DAY);
-    if (hariToday >= 0) {
-      kfTerlewat = KF_SCHEDULE.some((s) => {
-        if (hariToday <= s.windowEnd) return false;
-        const hasVisit = (doc.visits || []).some((v) => {
-          const vh = Math.floor((new Date(v.date) - new Date(doc.tanggalPersalinan)) / MS_PER_DAY);
-          return vh >= s.windowStart && vh <= s.windowEnd;
-        });
-        return !hasVisit;
-      });
-    }
-  }
-
-  return { bblr, apgarRendah, komplikasi, kfTerlewat };
+  return {
+    bblr: doc.bayi?.beratLahir != null && doc.bayi.beratLahir < 2500,
+    apgarRendah: doc.bayi?.nilaiApgar5 != null && doc.bayi.nilaiApgar5 < 7,
+    komplikasi: !!(doc.komplikasiIbu || doc.bayi?.komplikasiBayi),
+    kfTerlewat: !!doc.kfTerlewat,
+  };
 }
 
 const STATUS_BADGE = {
@@ -81,6 +57,7 @@ const STATUS_BADGE = {
 export default function DashboardPersalinanPage() {
   const [list, setList] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("tanggalPersalinan");
   const [status, setStatus] = useState("");
@@ -127,6 +104,11 @@ export default function DashboardPersalinanPage() {
       console.error(e);
     }
   };
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]); // eslint-disable-line
 
   useEffect(() => {
     fetchList();
@@ -272,8 +254,8 @@ export default function DashboardPersalinanPage() {
           <input
             type="text"
             placeholder="Cari nama / NIK..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
           />
         </div>

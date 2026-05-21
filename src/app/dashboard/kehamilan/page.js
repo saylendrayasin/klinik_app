@@ -44,8 +44,7 @@ function fmtDate(d) {
   }
 }
 
-function getFlags(doc) {
-  const today = new Date();
+function getFlags(doc, today) {
   const hpl = doc.hpl ? new Date(doc.hpl) : null;
   const daysToHPL = hpl ? Math.floor((hpl - today) / MS_PER_DAY) : null;
   const lastVisit = [...(doc.visits || [])].sort(
@@ -72,6 +71,7 @@ const STATUS_BADGE = {
 export default function DashboardKehamilanPage() {
   const [list, setList] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("hpl");
   const [status, setStatus] = useState("");
@@ -80,6 +80,7 @@ export default function DashboardKehamilanPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [exportOpen, setExportOpen] = useState(false);
   const now = useMemo(() => new Date(), []);
   const [exportMode, setExportMode] = useState("aktif");
@@ -119,6 +120,11 @@ export default function DashboardKehamilanPage() {
   };
 
   useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]); // eslint-disable-line
+
+  useEffect(() => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, sort, status, filter, page]);
@@ -128,14 +134,15 @@ export default function DashboardKehamilanPage() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm("Yakin ingin menghapus data kehamilan ini?")) return;
+    setPendingDeleteId(null);
+    const toastId = toast.loading("Menghapus...");
     try {
       await fetcher(`/api/kehamilan/${id}`, { method: "DELETE" });
-      toast.success("Data berhasil dihapus");
+      toast.success("Data berhasil dihapus", { id: toastId });
       fetchList();
       fetchSummary();
     } catch (e) {
-      toast.error(e?.message || "Gagal menghapus");
+      toast.error(e?.message || "Gagal menghapus", { id: toastId });
     }
   };
 
@@ -177,6 +184,8 @@ export default function DashboardKehamilanPage() {
       toast.error(e?.message || "Gagal download", { id: toastId });
     }
   };
+
+  const today = new Date();
 
   return (
     <div className="sm:p-8 max-w-7xl mx-auto">
@@ -264,8 +273,8 @@ export default function DashboardKehamilanPage() {
           <input
             type="text"
             placeholder="Cari nama / NIK..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
           />
         </div>
@@ -324,8 +333,7 @@ export default function DashboardKehamilanPage() {
                 </tr>
               )
               : list.map((doc) => {
-                  const flags = getFlags(doc);
-                  const today = new Date();
+                  const flags = getFlags(doc, today);
                   const ukNow = doc.hpht
                     ? Math.floor((today - new Date(doc.hpht)) / (7 * MS_PER_DAY))
                     : null;
@@ -368,13 +376,30 @@ export default function DashboardKehamilanPage() {
                             <FaEye />
                             <span className="hidden md:inline">Lihat</span>
                           </Link>
-                          <button
-                            onClick={() => handleDelete(doc._id)}
-                            className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm"
-                          >
-                            <FaTrash />
-                            <span className="hidden md:inline">Hapus</span>
-                          </button>
+                          {pendingDeleteId === doc._id ? (
+                            <>
+                              <button
+                                onClick={() => handleDelete(doc._id)}
+                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-sm font-semibold"
+                              >
+                                Yakin?
+                              </button>
+                              <button
+                                onClick={() => setPendingDeleteId(null)}
+                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-md text-sm"
+                              >
+                                Batal
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => setPendingDeleteId(doc._id)}
+                              className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm"
+                            >
+                              <FaTrash />
+                              <span className="hidden md:inline">Hapus</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -401,8 +426,7 @@ export default function DashboardKehamilanPage() {
           : list.length === 0
           ? <p className="text-center text-gray-500 mt-6">Tidak ada data kehamilan.</p>
           : list.map((doc) => {
-              const flags = getFlags(doc);
-              const today = new Date();
+              const flags = getFlags(doc, today);
               const ukNow = doc.hpht
                 ? Math.floor((today - new Date(doc.hpht)) / (7 * MS_PER_DAY))
                 : null;
@@ -435,12 +459,29 @@ export default function DashboardKehamilanPage() {
                     >
                       <FaEye /> Lihat
                     </Link>
-                    <button
-                      onClick={() => handleDelete(doc._id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium"
-                    >
-                      <FaTrash /> Hapus
-                    </button>
+                    {pendingDeleteId === doc._id ? (
+                      <>
+                        <button
+                          onClick={() => handleDelete(doc._id)}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-md text-sm font-semibold"
+                        >
+                          Yakin?
+                        </button>
+                        <button
+                          onClick={() => setPendingDeleteId(null)}
+                          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-md text-sm"
+                        >
+                          Batal
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setPendingDeleteId(doc._id)}
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium"
+                      >
+                        <FaTrash /> Hapus
+                      </button>
+                    )}
                   </div>
                 </div>
               );
