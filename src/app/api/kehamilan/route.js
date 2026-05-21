@@ -14,6 +14,16 @@ export async function GET(req) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
+
+    // Exact NIK lookup untuk pre-fill form (ambil record paling baru)
+    const nikExact = searchParams.get("nikExact");
+    if (nikExact) {
+      const recent = await Kehamilan.findOne({ nik: nikExact })
+        .sort({ createdAt: -1 })
+        .lean();
+      return successResponse("Lookup NIK selesai", recent || null);
+    }
+
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 5;
     const search = searchParams.get("search") || "";

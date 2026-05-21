@@ -99,10 +99,11 @@ function StatCard({ icon: Icon, label, value, colorClass, href }) {
 }
 
 export default function DashboardHomePage() {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(null);
   const [stats, setStats] = useState({ patients: null, kb: null, kehamilan: null });
 
   useEffect(() => {
+    setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
@@ -124,6 +125,7 @@ export default function DashboardHomePage() {
   }, []);
 
   const greeting = useMemo(() => {
+    if (!now) return "";
     const h = now.getHours();
     if (h >= 4 && h < 11) return "Selamat Pagi";
     if (h >= 11 && h < 15) return "Selamat Siang";
@@ -132,12 +134,12 @@ export default function DashboardHomePage() {
   }, [now]);
 
   const timeText = useMemo(
-    () => now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+    () => now ? now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "--:--:--",
     [now]
   );
 
   const dateText = useMemo(
-    () => now.toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }),
+    () => now ? now.toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }) : "",
     [now]
   );
 

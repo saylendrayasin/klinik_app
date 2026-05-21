@@ -11,6 +11,7 @@ import {
   FaUsers,
   FaHeartbeat,
   FaBaby,
+  FaHospital,
 } from "react-icons/fa";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +41,12 @@ const navItems = [
     label: "Kehamilan",
     icon: <FaBaby />,
     activeColor: "text-rose-400",
+  },
+  {
+    href: "/dashboard/persalinan",
+    label: "Persalinan",
+    icon: <FaHospital />,
+    activeColor: "text-emerald-400",
   },
   {
     href: "/dashboard/config",

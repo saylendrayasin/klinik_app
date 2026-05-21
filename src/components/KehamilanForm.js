@@ -23,6 +23,10 @@ function calcHPL(hphtStr) {
 export default function KehamilanForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [ibuSebelumnya, setIbuSebelumnya] = useState(null);
+  const [nikChecked, setNikChecked] = useState("");
+  const [showForceConfirm, setShowForceConfirm] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     nik: "",
@@ -42,44 +46,71 @@ export default function KehamilanForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "nik") {
+      setIbuSebelumnya(null);
+      setNikChecked("");
+      setShowForceConfirm(false);
+    }
+  };
+
+  const handleNikBlur = async () => {
+    const nik = form.nik.trim();
+    if (!nik || nik === nikChecked) return;
+    setNikChecked(nik);
+    try {
+      const res = await fetcher(`/api/kehamilan?nikExact=${encodeURIComponent(nik)}`);
+      setIbuSebelumnya(res.data || null);
+    } catch {
+      setIbuSebelumnya(null);
+    }
+  };
+
+  const handlePrefill = () => {
+    if (!ibuSebelumnya) return;
+    setForm((prev) => ({
+      ...prev,
+      name: ibuSebelumnya.name || prev.name,
+      dateOfBirth: ibuSebelumnya.dateOfBirth
+        ? new Date(ibuSebelumnya.dateOfBirth).toISOString().slice(0, 10)
+        : prev.dateOfBirth,
+      address: ibuSebelumnya.address || prev.address,
+      phone: ibuSebelumnya.phone || prev.phone,
+      bloodType: ibuSebelumnya.bloodType || prev.bloodType,
+      gravida: (ibuSebelumnya.gravida || 1) + 1,
+      para: ibuSebelumnya.para ?? 0,
+      abortus: ibuSebelumnya.abortus ?? 0,
+    }));
+    setIbuSebelumnya(null);
+    toast.success("Data diisi otomatis. Periksa G/P/A sebelum menyimpan.");
+  };
+
+  const doSubmit = async (force = false) => {
+    setLoading(true);
+    setShowForceConfirm(false);
+    const toastId = toast.loading("Menyimpan data kehamilan...");
+    try {
+      const payload = force ? { ...form, force: true } : form;
+      const res = await fetcher("/api/kehamilan", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      toast.success("Data kehamilan berhasil ditambahkan", { id: toastId });
+      setTimeout(() => router.push(`/dashboard/kehamilan/${res.data._id}`), 500);
+    } catch (error) {
+      if (!force && error?.message?.includes("kehamilan aktif")) {
+        toast.dismiss(toastId);
+        setShowForceConfirm(true);
+        setLoading(false);
+      } else {
+        toast.error(error?.message || "Gagal menambahkan data kehamilan.", { id: toastId });
+        setLoading(false);
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await fetcher("/api/kehamilan", {
-        method: "POST",
-        body: JSON.stringify(form),
-      });
-      toast.success("Data kehamilan berhasil ditambahkan");
-      setTimeout(() => router.push(`/dashboard/kehamilan/${res.data._id}`), 500);
-    } catch (error) {
-      if (error?.message?.includes("kehamilan aktif")) {
-        const forceOk = window.confirm(
-          error.message + "\n\nTekan OK untuk tetap mendaftarkan (data retrospektif)."
-        );
-        if (forceOk) {
-          try {
-            const res = await fetcher("/api/kehamilan", {
-              method: "POST",
-              body: JSON.stringify({ ...form, force: true }),
-            });
-            toast.success("Data kehamilan berhasil ditambahkan");
-            setTimeout(
-              () => router.push(`/dashboard/kehamilan/${res.data._id}`),
-              500
-            );
-            return;
-          } catch (err2) {
-            toast.error(err2?.message || "Gagal menambahkan data.");
-          }
-        }
-      } else {
-        toast.error(error?.message || "Gagal menambahkan data kehamilan.");
-      }
-      setLoading(false);
-    }
+    await doSubmit(false);
   };
 
   return (
@@ -89,7 +120,6 @@ export default function KehamilanForm() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Nama */}
         <Field label="Nama Ibu" required>
           <input
             name="name"
@@ -101,19 +131,37 @@ export default function KehamilanForm() {
           />
         </Field>
 
-        {/* NIK */}
         <Field label="NIK" required>
           <input
             name="nik"
             value={form.nik}
             onChange={handleChange}
+            onBlur={handleNikBlur}
             placeholder="Nomor Induk Kependudukan"
             required
             className="input-rose"
           />
         </Field>
 
-        {/* Tanggal Lahir */}
+        {ibuSebelumnya && (
+          <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 flex items-center justify-between gap-3">
+            <div className="text-sm text-blue-800 min-w-0">
+              <span className="font-semibold">{ibuSebelumnya.name}</span> pernah terdaftar di klinik ini
+              {ibuSebelumnya.hpht
+                ? ` (HPHT ${new Date(ibuSebelumnya.hpht).toLocaleDateString("id-ID")})`
+                : ""}
+              . Isi data otomatis?
+            </div>
+            <button
+              type="button"
+              onClick={handlePrefill}
+              className="shrink-0 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md font-semibold transition"
+            >
+              Isi Otomatis
+            </button>
+          </div>
+        )}
+
         <Field label="Tanggal Lahir" required>
           <input
             name="dateOfBirth"
@@ -125,7 +173,6 @@ export default function KehamilanForm() {
           />
         </Field>
 
-        {/* Alamat */}
         <Field label="Alamat">
           <input
             name="address"
@@ -136,7 +183,6 @@ export default function KehamilanForm() {
           />
         </Field>
 
-        {/* No HP + Golongan Darah */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="No. HP">
             <input
@@ -158,7 +204,6 @@ export default function KehamilanForm() {
           </Field>
         </div>
 
-        {/* G/P/A */}
         <div className="grid grid-cols-3 gap-4">
           <Field label="Gravida (G)" required>
             <input
@@ -193,7 +238,6 @@ export default function KehamilanForm() {
           </Field>
         </div>
 
-        {/* HPHT + HPL preview */}
         <Field label="HPHT (Hari Pertama Haid Terakhir)" required>
           <input
             name="hpht"
@@ -210,7 +254,6 @@ export default function KehamilanForm() {
           )}
         </Field>
 
-        {/* Status */}
         <Field label="Status">
           <select name="status" value={form.status} onChange={handleChange} className="input-rose">
             <option value="aktif">Aktif</option>
@@ -220,7 +263,33 @@ export default function KehamilanForm() {
           </select>
         </Field>
 
-        {/* Actions */}
+        {showForceConfirm && (
+          <div className="rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 space-y-2">
+            <p className="text-sm text-amber-800 font-semibold">
+              ⚠️ Ibu ini masih memiliki kehamilan aktif.
+            </p>
+            <p className="text-xs text-amber-700">
+              Lanjutkan untuk menyimpan sebagai data retrospektif, atau batalkan dan tutup dulu kehamilan yang aktif.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => doSubmit(true)}
+                className="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-semibold transition"
+              >
+                Lanjutkan
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForceConfirm(false)}
+                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-md font-semibold transition"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4">
           <button
             type="button"
@@ -255,7 +324,6 @@ export default function KehamilanForm() {
           outline: none;
         }
         .input-rose:focus {
-          ring: 2px;
           border-color: #fb7185;
           box-shadow: 0 0 0 2px rgba(251, 113, 133, 0.3);
         }
