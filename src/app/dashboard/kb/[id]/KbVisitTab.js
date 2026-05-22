@@ -6,6 +6,7 @@ import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import KbVisitModal from "@/components/KbVisitModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 const fmtDate = (dateStr) => {
   if (!dateStr) return "-";
@@ -30,6 +31,8 @@ export default function KbVisitsTab({ kb, onRefresh }) {
   const [editVisitIndex, setEditVisitIndex] = useState(null);
   const [initialVisitData, setInitialVisitData] = useState(null);
   const [modalMode, setModalMode] = useState("add");
+  const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
+  const [deletingVisit, setDeletingVisit] = useState(false);
 
   const handleOpenAddVisit = () => {
     setInitialVisitData(null);
@@ -75,12 +78,13 @@ export default function KbVisitsTab({ kb, onRefresh }) {
     }
   };
 
-  const handleDeleteVisit = async (index) => {
-    if (!confirm("Yakin ingin menghapus kunjungan ini?")) return;
+  const handleDeleteVisitConfirm = async () => {
+    if (deleteVisitTarget === null) return;
+    setDeletingVisit(true);
     const toastId = toast.loading("Menghapus kunjungan...");
     try {
       const updatedVisits = [...(kb.visits || [])];
-      updatedVisits.splice(index, 1);
+      updatedVisits.splice(deleteVisitTarget, 1);
 
       const res = await fetch(`/api/kb/${kb._id}`, {
         method: "PATCH",
@@ -93,11 +97,14 @@ export default function KbVisitsTab({ kb, onRefresh }) {
         throw new Error(err?.message || "Gagal menghapus kunjungan!");
       }
 
+      setDeleteVisitTarget(null);
       await onRefresh();
       toast.success("Kunjungan berhasil dihapus!", { id: toastId });
     } catch (error) {
       console.error(error);
       toast.error(error?.message || "Gagal menghapus kunjungan!", { id: toastId });
+    } finally {
+      setDeletingVisit(false);
     }
   };
 
@@ -153,7 +160,7 @@ export default function KbVisitsTab({ kb, onRefresh }) {
                     <FaEdit /> Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteVisit(visit.origIndex)}
+                    onClick={() => setDeleteVisitTarget(visit.origIndex)}
                     className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
                   >
                     <FaTrash />
@@ -183,6 +190,15 @@ export default function KbVisitsTab({ kb, onRefresh }) {
         onSubmit={handleSubmitVisit}
         initialData={initialVisitData}
         mode={modalMode}
+      />
+
+      <ConfirmModal
+        open={deleteVisitTarget !== null}
+        onClose={() => !deletingVisit && setDeleteVisitTarget(null)}
+        onConfirm={handleDeleteVisitConfirm}
+        loading={deletingVisit}
+        title="Hapus Kunjungan KB"
+        message="Apakah Anda yakin ingin menghapus kunjungan ini? Tindakan ini tidak dapat dibatalkan."
       />
     </div>
   );

@@ -15,6 +15,7 @@ import {
   FaUserEdit,
   FaClipboardList,
 } from "react-icons/fa";
+import ConfirmModal from "@/components/ConfirmModal";
 
 function fmtDate(d) {
   if (!d) return "-";
@@ -65,6 +66,8 @@ export default function DashboardPatientDetailPage() {
   const [initialVisitData, setInitialVisitData] = useState(null);
   const [modalMode, setModalMode] = useState("add");
   const [diagnosisMap, setDiagnosisMap] = useState({});
+  const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
+  const [deletingVisit, setDeletingVisit] = useState(false);
 
   const fetchDiagnosisMap = async () => {
     try {
@@ -181,21 +184,25 @@ export default function DashboardPatientDetailPage() {
     }
   };
 
-  const handleDeleteVisit = async (index) => {
-    if (!confirm("Yakin ingin menghapus kunjungan ini?")) return;
+  const handleDeleteVisitConfirm = async () => {
+    if (deleteVisitTarget === null) return;
+    setDeletingVisit(true);
     const toastId = toast.loading("Menghapus kunjungan...");
     try {
       const updatedVisits = [...patient.visits];
-      updatedVisits.splice(index, 1);
+      updatedVisits.splice(deleteVisitTarget, 1);
       await fetcher(`/api/patients/${params.id}`, {
         method: "PATCH",
         body: JSON.stringify({ visits: updatedVisits }),
       });
+      setDeleteVisitTarget(null);
       await fetchPatient();
       toast.success("Kunjungan berhasil dihapus!", { id: toastId });
     } catch (error) {
       console.error(error);
       toast.error("Gagal menghapus kunjungan!", { id: toastId });
+    } finally {
+      setDeletingVisit(false);
     }
   };
 
@@ -415,7 +422,7 @@ export default function DashboardPatientDetailPage() {
                             <FaEdit /> Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteVisit(visit.origIndex)}
+                            onClick={() => setDeleteVisitTarget(visit.origIndex)}
                             className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
                           >
                             <FaTrash />
@@ -461,6 +468,15 @@ export default function DashboardPatientDetailPage() {
         onSubmit={handleSubmitVisit}
         initialData={initialVisitData}
         mode={modalMode}
+      />
+
+      <ConfirmModal
+        open={deleteVisitTarget !== null}
+        onClose={() => !deletingVisit && setDeleteVisitTarget(null)}
+        onConfirm={handleDeleteVisitConfirm}
+        loading={deletingVisit}
+        title="Hapus Kunjungan"
+        message="Apakah Anda yakin ingin menghapus kunjungan ini? Tindakan ini tidak dapat dibatalkan."
       />
     </div>
   );

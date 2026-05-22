@@ -6,6 +6,7 @@ import { FaEdit, FaPlus, FaTrash, FaInfoCircle } from "react-icons/fa";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import PersalinanNifasModal from "@/components/PersalinanNifasModal";
+import ConfirmModal from "@/components/ConfirmModal";
 import { fetcher } from "@/lib/fetcher";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -99,7 +100,8 @@ export default function PersalinanVisitTab({ persalinan, onRefresh }) {
   const [editVisitId, setEditVisitId] = useState(null);
   const [initialData, setInitialData] = useState(null);
   const [showSchedule, setShowSchedule] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
+  const [deletingVisit, setDeletingVisit] = useState(false);
 
   const sortedVisits = [...(persalinan.visits || [])].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
@@ -144,18 +146,22 @@ export default function PersalinanVisitTab({ persalinan, onRefresh }) {
     }
   };
 
-  const handleDelete = async (visitId) => {
+  const handleDeleteVisitConfirm = async () => {
+    if (!deleteVisitTarget) return;
+    setDeletingVisit(true);
     const toastId = toast.loading("Menghapus...");
-    setPendingDeleteId(null);
     try {
       await fetcher(`/api/persalinan/${persalinan._id}`, {
         method: "PATCH",
-        body: JSON.stringify({ action: "deleteVisit", visitId }),
+        body: JSON.stringify({ action: "deleteVisit", visitId: deleteVisitTarget }),
       });
+      setDeleteVisitTarget(null);
       await onRefresh();
       toast.success("Kunjungan dihapus!", { id: toastId });
     } catch (error) {
       toast.error(error?.message || "Gagal menghapus!", { id: toastId });
+    } finally {
+      setDeletingVisit(false);
     }
   };
 
@@ -323,37 +329,18 @@ export default function PersalinanVisitTab({ persalinan, onRefresh }) {
                     )}
                   </div>
                   <div className="flex gap-1.5">
-                    {pendingDeleteId === String(visit._id) ? (
-                      <>
-                        <button
-                          onClick={() => handleDelete(String(visit._id))}
-                          className="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1.5 rounded text-xs font-semibold"
-                        >
-                          Yakin?
-                        </button>
-                        <button
-                          onClick={() => setPendingDeleteId(null)}
-                          className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-2.5 py-1.5 rounded text-xs"
-                        >
-                          Batal
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleOpenEdit(visit)}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
-                        >
-                          <FaEdit /> Edit
-                        </button>
-                        <button
-                          onClick={() => setPendingDeleteId(String(visit._id))}
-                          className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
-                        >
-                          <FaTrash />
-                        </button>
-                      </>
-                    )}
+                    <button
+                      onClick={() => handleOpenEdit(visit)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
+                    >
+                      <FaEdit /> Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteVisitTarget(String(visit._id))}
+                      className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
                 </div>
 
@@ -447,6 +434,15 @@ export default function PersalinanVisitTab({ persalinan, onRefresh }) {
         initialData={initialData}
         mode={modalMode}
         tanggalPersalinan={persalinan.tanggalPersalinan}
+      />
+
+      <ConfirmModal
+        open={!!deleteVisitTarget}
+        onClose={() => !deletingVisit && setDeleteVisitTarget(null)}
+        onConfirm={handleDeleteVisitConfirm}
+        loading={deletingVisit}
+        title="Hapus Kunjungan Nifas"
+        message="Apakah Anda yakin ingin menghapus kunjungan ini? Tindakan ini tidak dapat dibatalkan."
       />
     </div>
   );

@@ -1,44 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --sidebar-bg: #0f172a;
+  --sidebar-border: rgba(255,255,255,0.07);
+  --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --card-shadow-hover: 0 4px 16px 0 rgb(0 0 0 / 0.10);
 }
 
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
-
-/* Animasi loading skeleton */
 @keyframes skeletonPulse {
-  0% {
-    background-color: #e0e0e0; /* warna awal */
-  }
-  50% {
-    background-color: #d0d0d0; /* warna tengah */
-  }
-  100% {
-    background-color: #e0e0e0; /* kembali ke warna awal */
-  }
+  0%, 100% { background-color: #e2e8f0; }
+  50% { background-color: #cbd5e1; }
 }
 
-/* Kelas skeleton untuk digunakan pada elemen yang ingin diberi animasi */
 .skeleton {
-  animation: skeletonPulse 1.5s infinite ease-in-out;
+  animation: skeletonPulse 1.4s infinite ease-in-out;
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* calendar.css */
 .react-calendar__tile {
-  font-size: 1rem;
-  padding: 0.7em 0.3em;
+  font-size: 0.92rem;
+  padding: 0.6em 0.3em;
 }
 
 .react-calendar {
   width: 100% !important;
-  max-width: 1200px !important;
+  max-width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-family: inherit !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.react-calendar__navigation button {
+  font-weight: 600;
 }
 
 body {

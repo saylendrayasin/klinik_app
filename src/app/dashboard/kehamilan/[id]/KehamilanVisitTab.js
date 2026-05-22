@@ -6,6 +6,7 @@ import { FaEdit, FaPlus, FaTrash, FaInfoCircle } from "react-icons/fa";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import KehamilanVisitModal from "@/components/KehamilanVisitModal";
+import ConfirmModal from "@/components/ConfirmModal";
 import { fetcher } from "@/lib/fetcher";
 
 const KEMENKES_SCHEDULE = [
@@ -45,6 +46,8 @@ export default function KehamilanVisitTab({ kehamilan, onRefresh }) {
   const [editVisitId, setEditVisitId] = useState(null);
   const [initialData, setInitialData] = useState(null);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
+  const [deletingVisit, setDeletingVisit] = useState(false);
 
   const sortedVisits = [...(kehamilan.visits || [])].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
@@ -92,18 +95,22 @@ export default function KehamilanVisitTab({ kehamilan, onRefresh }) {
     }
   };
 
-  const handleDelete = async (visitId) => {
-    if (!confirm("Yakin ingin menghapus kunjungan ini?")) return;
+  const handleDeleteVisitConfirm = async () => {
+    if (!deleteVisitTarget) return;
+    setDeletingVisit(true);
     const toastId = toast.loading("Menghapus...");
     try {
       await fetcher(`/api/kehamilan/${kehamilan._id}`, {
         method: "PATCH",
-        body: JSON.stringify({ action: "deleteVisit", visitId }),
+        body: JSON.stringify({ action: "deleteVisit", visitId: deleteVisitTarget }),
       });
+      setDeleteVisitTarget(null);
       await onRefresh();
       toast.success("Kunjungan dihapus!", { id: toastId });
     } catch (error) {
       toast.error(error?.message || "Gagal menghapus!", { id: toastId });
+    } finally {
+      setDeletingVisit(false);
     }
   };
 
@@ -243,7 +250,7 @@ export default function KehamilanVisitTab({ kehamilan, onRefresh }) {
                       <FaEdit /> Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(String(visit._id))}
+                      onClick={() => setDeleteVisitTarget(String(visit._id))}
                       className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
                     >
                       <FaTrash />
@@ -299,6 +306,15 @@ export default function KehamilanVisitTab({ kehamilan, onRefresh }) {
         initialData={initialData}
         mode={modalMode}
         hpht={kehamilan.hpht}
+      />
+
+      <ConfirmModal
+        open={!!deleteVisitTarget}
+        onClose={() => !deletingVisit && setDeleteVisitTarget(null)}
+        onConfirm={handleDeleteVisitConfirm}
+        loading={deletingVisit}
+        title="Hapus Kunjungan ANC"
+        message="Apakah Anda yakin ingin menghapus kunjungan ini? Tindakan ini tidak dapat dibatalkan."
       />
     </div>
   );

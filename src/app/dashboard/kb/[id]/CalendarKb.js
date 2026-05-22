@@ -4,154 +4,131 @@ import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format } from "date-fns";
-import id from "date-fns/locale/id";
+import { id as localeId } from "date-fns/locale";
+
+function toDateStr(d) {
+  try { return format(new Date(d), "yyyy-MM-dd"); } catch { return ""; }
+}
+
+function fmtFull(d) {
+  try { return format(new Date(d), "dd MMMM yyyy", { locale: localeId }); } catch { return "-"; }
+}
 
 export default function CalendarKb({ kb }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [events, setEvents] = useState([]);
+  const [datangMap, setDatangMap] = useState({});
+  const [kembaliMap, setKembaliMap] = useState({});
 
   useEffect(() => {
-    if (kb?.visits) {
-      const transformed = kb.visits
-        .flatMap((v, idx) => [
-          { type: "datang", date: new Date(v.date), metode: v.metode, visitIdx: idx },
-          v.returnDate
-            ? { type: "kembali", date: new Date(v.returnDate), metode: v.metode, visitIdx: idx }
-            : null,
-        ])
-        .filter(Boolean);
-      setEvents(transformed);
-    }
+    const dm = {};
+    const km = {};
+    (kb?.visits || []).forEach((v, idx) => {
+      if (v.date) {
+        const ds = toDateStr(v.date);
+        if (!dm[ds]) dm[ds] = [];
+        dm[ds].push({ ...v, idx });
+      }
+      if (v.returnDate) {
+        const ks = toDateStr(v.returnDate);
+        if (!km[ks]) km[ks] = [];
+        km[ks].push({ ...v, idx });
+      }
+    });
+    setDatangMap(dm);
+    setKembaliMap(km);
   }, [kb?.visits]);
 
   const tileContent = ({ date }) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    const isDatang = events.some(
-      (e) => e.type === "datang" && format(e.date, "yyyy-MM-dd") === dateStr
-    );
-    const isKembali = events.some(
-      (e) => e.type === "kembali" && format(e.date, "yyyy-MM-dd") === dateStr
-    );
-
+    const ds = toDateStr(date);
+    const hasDatang = !!datangMap[ds];
+    const hasKembali = !!kembaliMap[ds];
+    if (!hasDatang && !hasKembali) return null;
     return (
-      <div className="mt-1 flex justify-center gap-1">
-        {isDatang && (
-          <div
-            className="w-3 h-3 rounded-full bg-blue-600 ring-2 ring-blue-300 shadow"
-            title="Tanggal Datang"
-          />
-        )}
-        {isKembali && (
-          <div
-            className="w-3 h-3 rounded-full bg-pink-500 ring-2 ring-pink-300 shadow"
-            title="Tanggal Kembali"
-          />
-        )}
+      <div className="mt-1 flex justify-center gap-0.5">
+        {hasDatang && <span className="w-2 h-2 rounded-full bg-violet-600 ring-1 ring-violet-300" title="Tanggal Datang" />}
+        {hasKembali && <span className="w-2 h-2 rounded-full bg-pink-500 ring-1 ring-pink-300" title="Tanggal Kembali" />}
       </div>
     );
   };
 
-  const renderEventDetails = () => {
-    const todayStr = format(selectedDate, "yyyy-MM-dd");
-
-    const matchedVisits = (kb?.visits || []).filter((v) => {
-      const datangStr = v.date ? format(new Date(v.date), "yyyy-MM-dd") : null;
-      const kembaliStr = v.returnDate ? format(new Date(v.returnDate), "yyyy-MM-dd") : null;
-      return datangStr === todayStr || kembaliStr === todayStr;
-    });
-
-    if (matchedVisits.length === 0) return null;
-
-    return (
-      <div className="mt-4 w-full rounded-lg bg-white p-5 shadow-md border border-gray-200">
-        <h3 className="text-lg font-bold mb-4 text-purple-700">
-          Detail Kunjungan -{" "}
-          {format(selectedDate, "dd MMMM yyyy", { locale: id })}
-        </h3>
-
-        <div className="space-y-4">
-          {matchedVisits.map((visit, i) => {
-            const datangStr = visit.date ? format(new Date(visit.date), "yyyy-MM-dd") : null;
-            const isDatangToday = datangStr === todayStr;
-            const type = isDatangToday ? "datang" : "kembali";
-
-            return (
-              <div
-                key={i}
-                className="flex items-start gap-4 border-l-4 pl-4 rounded-md py-2"
-                style={{
-                  borderColor: type === "datang" ? "#3b82f6" : "#ec4899",
-                  backgroundColor: type === "datang" ? "#eff6ff" : "#fdf2f8",
-                }}
-              >
-                <div className="mt-0.5">
-                  <div className="font-semibold text-sm text-gray-800">
-                    {type === "datang" ? "🟦 Tanggal Datang" : "🟣 Tanggal Kembali"}
-                  </div>
-                  <div className="text-sm text-gray-600 mt-0.5">
-                    Metode: <span className="font-medium">{visit.metode}</span>
-                  </div>
-                  {visit.notes && (
-                    <div className="text-sm text-gray-600 mt-0.5">
-                      Catatan: <span className="font-medium">{visit.notes}</span>
-                    </div>
-                  )}
-                  {type === "datang" && visit.returnDate && (
-                    <div className="text-sm text-gray-500 mt-1 italic">
-                      Tanggal Kembali:{" "}
-                      <span className="font-bold">
-                        {format(new Date(visit.returnDate), "dd MMMM yyyy", { locale: id })}
-                      </span>
-                    </div>
-                  )}
-                  {type === "kembali" && visit.date && (
-                    <div className="text-sm text-gray-500 mt-1 italic">
-                      Tanggal Datang:{" "}
-                      <span className="font-bold">
-                        {format(new Date(visit.date), "dd MMMM yyyy", { locale: id })}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+  const selectedStr = toDateStr(selectedDate);
+  const datangVisits = datangMap[selectedStr] || [];
+  const kembaliVisits = kembaliMap[selectedStr] || [];
+  const hasDetail = datangVisits.length > 0 || kembaliVisits.length > 0;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10">
-      <div className="flex justify-center">
-        <div className="w-full max-w-7xl">
+    <div className="max-w-4xl mx-auto space-y-4">
+      {/* Calendar card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-violet-500 to-violet-400" />
+        <div className="p-4">
           <Calendar
             onChange={setSelectedDate}
             value={selectedDate}
             locale="id-ID"
             tileContent={tileContent}
-            className="calendar-custom bg-white rounded-md shadow-lg p-4 w-full text-base"
+            className="calendar-custom w-full"
           />
         </div>
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
-        <div className="flex items-center gap-2 sm:gap-3 bg-blue-50 border border-blue-200 text-blue-700 px-2 py-1 sm:px-4 sm:py-2 rounded-full shadow-sm">
-          <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-600 ring-2 ring-blue-300" />
-          <span className="tracking-tight sm:tracking-normal font-medium">
-            Tanggal Datang
-          </span>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 bg-pink-50 border border-pink-200 text-pink-700 px-2 py-1 sm:px-4 sm:py-2 rounded-full shadow-sm">
-          <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-pink-500 ring-2 ring-pink-300" />
-          <span className="tracking-tight sm:tracking-normal font-medium">
-            Tanggal Kembali
-          </span>
-        </div>
+      <div className="flex flex-wrap justify-center gap-2 text-xs">
+        <span className="flex items-center gap-1.5 bg-violet-50 border border-violet-200 text-violet-700 px-3 py-1.5 rounded-full font-medium">
+          <span className="w-2 h-2 rounded-full bg-violet-600 ring-1 ring-violet-300" />
+          Tanggal Datang
+        </span>
+        <span className="flex items-center gap-1.5 bg-pink-50 border border-pink-200 text-pink-700 px-3 py-1.5 rounded-full font-medium">
+          <span className="w-2 h-2 rounded-full bg-pink-500 ring-1 ring-pink-300" />
+          Tanggal Kembali
+        </span>
       </div>
 
-      {renderEventDetails()}
+      {/* Detail panel */}
+      {hasDetail ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-violet-500 to-violet-400" />
+          <div className="p-4 sm:p-5">
+            <h3 className="font-bold text-slate-800 text-sm mb-3">
+              {fmtFull(selectedDate)}
+            </h3>
+            <div className="space-y-3">
+              {datangVisits.map((v, i) => (
+                <div key={`datang-${i}`} className="rounded-xl bg-violet-50 border border-violet-100 p-3.5 space-y-1.5">
+                  <p className="text-xs font-bold text-violet-700 uppercase tracking-wide">Tanggal Datang</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Metode: <span className="text-violet-700">{v.metode || "-"}</span>
+                  </p>
+                  {v.notes && <p className="text-xs text-slate-500">Catatan: {v.notes}</p>}
+                  {v.returnDate && (
+                    <p className="text-xs text-slate-500">
+                      Tanggal Kembali: <span className="font-semibold text-slate-700">{fmtFull(v.returnDate)}</span>
+                    </p>
+                  )}
+                </div>
+              ))}
+              {kembaliVisits.map((v, i) => (
+                <div key={`kembali-${i}`} className="rounded-xl bg-pink-50 border border-pink-100 p-3.5 space-y-1.5">
+                  <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">Tanggal Kembali</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Metode: <span className="text-pink-700">{v.metode || "-"}</span>
+                  </p>
+                  {v.notes && <p className="text-xs text-slate-500">Catatan: {v.notes}</p>}
+                  {v.date && (
+                    <p className="text-xs text-slate-500">
+                      Tanggal Datang: <span className="font-semibold text-slate-700">{fmtFull(v.date)}</span>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="text-center text-xs text-slate-400 py-2">
+          Klik tanggal bertanda untuk melihat detail kunjungan
+        </p>
+      )}
     </div>
   );
 }
