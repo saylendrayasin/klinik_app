@@ -10,6 +10,11 @@ import ConfirmModal from "@/components/ConfirmModal";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 function calcHPL(hphtStr) {
   if (!hphtStr) return "";
   const d = new Date(`${hphtStr}T00:00:00`);
@@ -177,6 +182,7 @@ export default function KehamilanForm() {
               type="date"
               value={form.dateOfBirth}
               onChange={handleChange}
+              max={todayStr()}
               required
               className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/50 focus:border-pink-300 transition"
             />
@@ -258,6 +264,7 @@ export default function KehamilanForm() {
               type="date"
               value={form.hpht}
               onChange={handleChange}
+              max={todayStr()}
               required
               className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/50 focus:border-pink-300 transition"
             />

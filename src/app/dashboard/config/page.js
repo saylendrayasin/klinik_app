@@ -6,6 +6,7 @@ import { fetcher } from "@/lib/fetcher";
 import { toast } from "react-hot-toast";
 import { FaEdit, FaPlus } from "react-icons/fa";
 import { Settings2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, SlidersHorizontal } from "lucide-react";
+import ConfirmModal from "@/components/ConfirmModal";
 
 export default function DashboardConfigPage() {
   const [items, setItems] = useState([]);
@@ -16,6 +17,8 @@ export default function DashboardConfigPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState(null);
+  const [toggling, setToggling] = useState(false);
 
   const limit = 10;
 
@@ -35,9 +38,11 @@ export default function DashboardConfigPage() {
     try {
       const data = await fetcher(queryUrl);
       setItems(data?.data || []);
-      setTotalPages(data?.totalPages || 1);
+      const tp = data?.totalPages || 1;
+      setTotalPages(tp);
+      if (page > tp) setPage(Math.max(1, tp));
     } catch (error) {
-      console.error(error);
+      toast.error("Gagal memuat data konfigurasi");
     } finally {
       setLoading(false);
     }
@@ -47,18 +52,22 @@ export default function DashboardConfigPage() {
     fetchConfigs();
   }, [queryUrl]); // eslint-disable-line
 
-  const handleToggleActive = async (item) => {
+  const handleToggleConfirm = async () => {
+    if (!toggleTarget) return;
+    setToggling(true);
     const toastId = toast.loading("Memperbarui status...");
     try {
-      await fetcher(`/api/config/${item._id}`, {
+      await fetcher(`/api/config/${toggleTarget._id}`, {
         method: "PATCH",
-        body: JSON.stringify({ isActive: !item.isActive }),
+        body: JSON.stringify({ isActive: !toggleTarget.isActive }),
       });
+      setToggleTarget(null);
       await fetchConfigs();
       toast.success("Status berhasil diperbarui", { id: toastId });
     } catch (error) {
-      console.error(error);
       toast.error("Gagal memperbarui status", { id: toastId });
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -170,7 +179,7 @@ export default function DashboardConfigPage() {
                         <FaEdit size={10} /> Edit
                       </Link>
                       <button
-                        onClick={() => handleToggleActive(item)}
+                        onClick={() => setToggleTarget(item)}
                         className={`inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 min-w-[100px] ${
                           item.isActive
                             ? "bg-red-50 hover:bg-red-500 text-red-600 hover:text-white border border-red-200 hover:border-red-500"
@@ -223,7 +232,7 @@ export default function DashboardConfigPage() {
                     <FaEdit size={12} /> Edit
                   </Link>
                   <button
-                    onClick={() => handleToggleActive(item)}
+                    onClick={() => setToggleTarget(item)}
                     className={`flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition active:scale-95 ${
                       item.isActive
                         ? "bg-red-50 hover:bg-red-500 text-red-600 hover:text-white border border-red-200 hover:border-red-500"
@@ -238,6 +247,20 @@ export default function DashboardConfigPage() {
           ))
         )}
       </div>
+
+      <ConfirmModal
+        open={!!toggleTarget}
+        onClose={() => !toggling && setToggleTarget(null)}
+        onConfirm={handleToggleConfirm}
+        loading={toggling}
+        title={toggleTarget?.isActive ? "Nonaktifkan Diagnosis" : "Aktifkan Diagnosis"}
+        message={
+          toggleTarget?.isActive
+            ? `Nonaktifkan diagnosis "${toggleTarget?.label}"? Diagnosis nonaktif tidak akan muncul di pilihan form kunjungan.`
+            : `Aktifkan kembali diagnosis "${toggleTarget?.label}"?`
+        }
+        confirmLabel={toggleTarget?.isActive ? "Ya, Nonaktifkan" : "Ya, Aktifkan"}
+      />
 
       {/* Pagination */}
       {items.length > 0 && (

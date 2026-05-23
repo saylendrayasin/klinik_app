@@ -7,6 +7,11 @@ import { X } from "lucide-react";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 function calcUK(hpht, dateStr) {
   if (!hpht || !dateStr) return null;
   const diff = new Date(`${dateStr}T00:00:00`) - new Date(hpht);
@@ -68,6 +73,14 @@ export default function KehamilanVisitModal({
 
   const [form, setForm] = useState(empty);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === "Escape" && !submitting) onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, submitting]);
 
   const uk = calcUK(hpht, form.date);
   const trimester = calcTrimester(uk);
@@ -148,9 +161,10 @@ export default function KehamilanVisitModal({
               <button
                 onClick={onClose}
                 disabled={submitting}
-                className="p-1.5 rounded-md hover:bg-gray-100 transition"
+                aria-label="Tutup"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -165,6 +179,7 @@ export default function KehamilanVisitModal({
                   type="date"
                   value={form.date}
                   onChange={handleChange}
+                  max={todayStr()}
                   required
                   className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
                 />

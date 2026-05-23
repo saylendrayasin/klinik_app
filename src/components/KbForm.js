@@ -6,6 +6,11 @@ import { fetcher } from "@/lib/fetcher";
 import toast from "react-hot-toast";
 import { FaSpinner } from "react-icons/fa";
 
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 export default function KbForm() {
   const [form, setForm] = useState({
     name: "",
@@ -101,6 +106,7 @@ export default function KbForm() {
             type="date"
             value={form.dateOfBirth}
             onChange={handleChange}
+            max={todayStr()}
             required
             className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
           />

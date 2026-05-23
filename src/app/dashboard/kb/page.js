@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fetcher } from "@/lib/fetcher";
 import { FaEye, FaTrash, FaHeartbeat, FaFileExcel, FaPlus } from "react-icons/fa";
@@ -39,9 +39,11 @@ export default function DashboardKbPage() {
     try {
       const data = await fetcher(`/api/kb?page=${page}&limit=${limit}&search=${search}&sort=${sort}`);
       setKbList(data.data);
-      setTotalPages(data.totalPages);
+      const tp = data.totalPages || 1;
+      setTotalPages(tp);
+      if (page > tp) setPage(Math.max(1, tp));
     } catch (error) {
-      console.error(error);
+      toast.error("Gagal memuat data KB");
     } finally {
       setLoading(false);
     }
@@ -50,6 +52,13 @@ export default function DashboardKbPage() {
   useEffect(() => {
     fetchKbList();
   }, [search, sort, page]); // eslint-disable-line
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    const handler = (e) => { if (e.key === "Escape") setExportOpen(false); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [exportOpen]);
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
@@ -62,9 +71,10 @@ export default function DashboardKbPage() {
     try {
       await fetcher(`/api/kb/${deleteTarget.id}`, { method: "DELETE" });
       setDeleteTarget(null);
+      toast.success("Data KB berhasil dihapus");
       fetchKbList();
     } catch (error) {
-      console.error(error);
+      toast.error(error?.message || "Gagal menghapus data KB");
     } finally {
       setDeleting(false);
     }
@@ -268,7 +278,7 @@ export default function DashboardKbPage() {
               <div className="h-1 bg-gradient-to-r from-violet-500 to-violet-400" />
               <div className="p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-sm font-bold text-slate-800 flex-1">{kb.name}</h2>
+                  <h2 className="text-sm font-bold text-slate-800 flex-1 truncate min-w-0">{kb.name}</h2>
                   <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                     kb.numberOfChildren > 3 ? "bg-red-100 text-red-700" : "bg-violet-100 text-violet-700"
                   }`}>
@@ -326,7 +336,7 @@ export default function DashboardKbPage() {
                 <h3 className="font-bold text-slate-800">Export Data KB</h3>
                 <p className="text-xs text-slate-500 mt-0.5">Pilih bulan & tahun laporan</p>
               </div>
-              <button onClick={() => setExportOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+              <button onClick={() => setExportOpen(false)} aria-label="Tutup" className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
                 <X className="w-4 h-4" />
               </button>
             </div>

@@ -42,6 +42,14 @@ const STATUS_BADGE = {
   meninggal: "bg-slate-100 text-slate-600",
 };
 
+const STATUS_ICON = {
+  terdaftar: "○",
+  aktif: "●",
+  selesai: "✓",
+  rujuk: "→",
+  meninggal: "×",
+};
+
 export default function DashboardPersalinanPage() {
   const [list, setList] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -71,8 +79,10 @@ export default function DashboardPersalinanPage() {
       else if (status) qs.set("status", status);
       const data = await fetcher(`/api/persalinan?${qs}`);
       setList(data.data);
-      setTotalPages(data.totalPages);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+      const tp = data.totalPages || 1;
+      setTotalPages(tp);
+      if (page > tp) setPage(Math.max(1, tp));
+    } catch (e) { toast.error("Gagal memuat data persalinan"); } finally { setLoading(false); }
   };
 
   const fetchSummary = async () => {
@@ -86,6 +96,13 @@ export default function DashboardPersalinanPage() {
 
   useEffect(() => { fetchList(); }, [search, sort, status, filter, page]); // eslint-disable-line
   useEffect(() => { fetchSummary(); }, []);
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    const handler = (e) => { if (e.key === "Escape") setExportOpen(false); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [exportOpen]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -102,6 +119,7 @@ export default function DashboardPersalinanPage() {
 
   const handleExport = async () => {
     if (!exportFrom || !exportTo) return toast.error("Tanggal wajib diisi");
+    if (exportFrom > exportTo) return toast.error("Tanggal 'Dari' harus lebih awal dari 'Sampai'");
     const qs = new URLSearchParams({ mode: exportMode, from: exportFrom, to: exportTo });
     setExportOpen(false);
     const toastId = toast.loading("Menyiapkan file...");
@@ -240,7 +258,7 @@ export default function DashboardPersalinanPage() {
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${STATUS_BADGE[doc.status] || "bg-slate-100 text-slate-600"}`}>{doc.status}</span>
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize inline-flex items-center gap-1 ${STATUS_BADGE[doc.status] || "bg-slate-100 text-slate-600"}`}><span aria-hidden="true">{STATUS_ICON[doc.status] || "●"}</span>{doc.status}</span>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex justify-center gap-2">
@@ -336,7 +354,7 @@ export default function DashboardPersalinanPage() {
             <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div><h3 className="font-bold text-slate-800">Export Data Persalinan</h3><p className="text-xs text-slate-500 mt-0.5">Pilih mode dan rentang tanggal</p></div>
-              <button onClick={() => setExportOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><X className="w-4 h-4" /></button>
+              <button onClick={() => setExportOpen(false)} aria-label="Tutup" className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="flex flex-col gap-1.5">

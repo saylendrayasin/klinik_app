@@ -7,6 +7,11 @@ import toast from "react-hot-toast";
 import { FaSpinner, FaHospital } from "react-icons/fa";
 import { UserCheck } from "lucide-react";
 
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 export default function PersalinanForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -168,6 +173,7 @@ export default function PersalinanForm() {
               type="date"
               value={form.dateOfBirth}
               onChange={handleChange}
+              max={todayStr()}
               required
               className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition"
             />

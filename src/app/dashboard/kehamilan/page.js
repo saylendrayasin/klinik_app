@@ -46,6 +46,13 @@ const STATUS_BADGE = {
   rujuk: "bg-amber-100 text-amber-700",
 };
 
+const STATUS_ICON = {
+  aktif: "●",
+  selesai: "✓",
+  keguguran: "○",
+  rujuk: "→",
+};
+
 export default function DashboardKehamilanPage() {
   const [list, setList] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -75,8 +82,10 @@ export default function DashboardKehamilanPage() {
       else if (status) qs.set("status", status);
       const data = await fetcher(`/api/kehamilan?${qs}`);
       setList(data.data);
-      setTotalPages(data.totalPages);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+      const tp = data.totalPages || 1;
+      setTotalPages(tp);
+      if (page > tp) setPage(Math.max(1, tp));
+    } catch (e) { toast.error("Gagal memuat data kehamilan"); } finally { setLoading(false); }
   };
 
   const fetchSummary = async () => {
@@ -90,6 +99,13 @@ export default function DashboardKehamilanPage() {
 
   useEffect(() => { fetchList(); }, [search, sort, status, filter, page]); // eslint-disable-line
   useEffect(() => { fetchSummary(); }, []);
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    const handler = (e) => { if (e.key === "Escape") setExportOpen(false); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [exportOpen]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -106,6 +122,7 @@ export default function DashboardKehamilanPage() {
 
   const handleExport = async () => {
     if (exportMode === "visits" && (!exportFrom || !exportTo)) return toast.error("Tanggal wajib diisi");
+    if (exportMode === "visits" && exportFrom > exportTo) return toast.error("Tanggal 'Dari' harus lebih awal dari 'Sampai'");
     const qs = new URLSearchParams({ mode: exportMode });
     if (exportMode === "visits") { qs.set("from", exportFrom); qs.set("to", exportTo); }
     setExportOpen(false);
@@ -247,7 +264,7 @@ export default function DashboardKehamilanPage() {
                     <td className="py-3 px-4 text-slate-700">{fmtDate(doc.hpl)}</td>
                     <td className="py-3 px-4">{ukNow != null ? <span className="font-bold text-pink-700">{ukNow} mg</span> : "-"}</td>
                     <td className="py-3 px-4">
-                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${STATUS_BADGE[doc.status] || "bg-slate-100 text-slate-600"}`}>{doc.status}</span>
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize inline-flex items-center gap-1 ${STATUS_BADGE[doc.status] || "bg-slate-100 text-slate-600"}`}><span aria-hidden="true">{STATUS_ICON[doc.status] || "●"}</span>{doc.status}</span>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex justify-center gap-2">
@@ -346,7 +363,7 @@ export default function DashboardKehamilanPage() {
             <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div><h3 className="font-bold text-slate-800">Export Data Kehamilan</h3><p className="text-xs text-slate-500 mt-0.5">Pilih mode export</p></div>
-              <button onClick={() => setExportOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><X className="w-4 h-4" /></button>
+              <button onClick={() => setExportOpen(false)} aria-label="Tutup" className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="flex flex-col gap-1.5">

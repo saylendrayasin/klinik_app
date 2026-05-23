@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
 import VisitModal from "@/components/VisitModal";
@@ -68,6 +68,23 @@ export default function DashboardPatientDetailPage() {
   const [diagnosisMap, setDiagnosisMap] = useState({});
   const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
   const [deletingVisit, setDeletingVisit] = useState(false);
+  const [backConfirmOpen, setBackConfirmOpen] = useState(false);
+
+  const savedForm = useMemo(() => ({
+    name: patient?.name || "",
+    dateOfBirth: patient?.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().slice(0, 10) : "",
+    address: patient?.address || "",
+    gender: patient?.gender || "Male",
+  }), [patient]);
+
+  const isDirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const fetchDiagnosisMap = async () => {
     try {
@@ -211,7 +228,7 @@ export default function DashboardPatientDetailPage() {
       {/* Back */}
       <div className="flex justify-start mb-4">
         <button
-          onClick={() => router.push("/dashboard/patients")}
+          onClick={() => isDirty ? setBackConfirmOpen(true) : router.push("/dashboard/patients")}
           className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
         >
           <FaArrowLeft /> Kembali
@@ -327,6 +344,7 @@ export default function DashboardPatientDetailPage() {
                     type="date"
                     value={form.dateOfBirth}
                     onChange={handleInputChange}
+                    max={new Date().toLocaleDateString("en-CA")}
                     required
                     className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
@@ -477,6 +495,15 @@ export default function DashboardPatientDetailPage() {
         loading={deletingVisit}
         title="Hapus Kunjungan"
         message="Apakah Anda yakin ingin menghapus kunjungan ini? Tindakan ini tidak dapat dibatalkan."
+      />
+
+      <ConfirmModal
+        open={backConfirmOpen}
+        onClose={() => setBackConfirmOpen(false)}
+        onConfirm={() => router.push("/dashboard/patients")}
+        title="Perubahan Belum Disimpan"
+        message="Ada perubahan yang belum disimpan. Keluar halaman ini akan membatalkan semua perubahan."
+        confirmLabel="Keluar Tanpa Simpan"
       />
     </div>
   );

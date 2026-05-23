@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetcher } from "@/lib/fetcher";
+import toast from "react-hot-toast";
 import { FaEye, FaTrash, FaUsers, FaPlus } from "react-icons/fa";
 import {
   ChevronLeft,
@@ -33,9 +34,11 @@ export default function DashboardPatientsPage() {
         `/api/patients?page=${page}&limit=${limit}&search=${search}&sort=${sort}`
       );
       setPatients(data.data);
-      setTotalPages(data.totalPages);
+      const tp = data.totalPages || 1;
+      setTotalPages(tp);
+      if (page > tp) setPage(Math.max(1, tp));
     } catch (error) {
-      console.error(error);
+      toast.error("Gagal memuat data pasien");
     } finally {
       setLoading(false);
     }
@@ -56,9 +59,10 @@ export default function DashboardPatientsPage() {
     try {
       await fetcher(`/api/patients/${deleteTarget.id}`, { method: "DELETE" });
       setDeleteTarget(null);
+      toast.success("Pasien berhasil dihapus");
       fetchPatients();
     } catch (error) {
-      console.error(error);
+      toast.error(error?.message || "Gagal menghapus pasien");
     } finally {
       setDeleting(false);
     }
@@ -224,7 +228,7 @@ export default function DashboardPatientsPage() {
               <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-400" />
               <div className="p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-sm font-bold text-slate-800 flex-1">{patient.name}</h2>
+                  <h2 className="text-sm font-bold text-slate-800 flex-1 truncate min-w-0">{patient.name}</h2>
                   <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                     patient.gender === "Male" ? "bg-sky-100 text-sky-700" : "bg-pink-100 text-pink-700"
                   }`}>

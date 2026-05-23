@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
 import KehamilanEditForm from "./kehamilanEditForm";
+import ConfirmModal from "@/components/ConfirmModal";
 import CalendarKehamilan from "./CalendarKehamilan";
 import KehamilanVisitTab from "./KehamilanVisitTab";
 import {
@@ -86,6 +87,29 @@ export default function KehamilanDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("calendar");
   const [otherRecords, setOtherRecords] = useState([]);
+  const [backConfirmOpen, setBackConfirmOpen] = useState(false);
+
+  const savedForm = useMemo(() => ({
+    name: kehamilan?.name || "",
+    nik: kehamilan?.nik || "",
+    dateOfBirth: kehamilan?.dateOfBirth ? new Date(kehamilan.dateOfBirth).toISOString().slice(0, 10) : "",
+    address: kehamilan?.address || "",
+    phone: kehamilan?.phone || "",
+    bloodType: kehamilan?.bloodType || "",
+    gravida: kehamilan?.gravida ?? 1,
+    para: kehamilan?.para ?? 0,
+    abortus: kehamilan?.abortus ?? 0,
+    hpht: kehamilan?.hpht ? new Date(kehamilan.hpht).toISOString().slice(0, 10) : "",
+  }), [kehamilan]);
+
+  const isDirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const [form, setForm] = useState({
     name: "",
@@ -160,7 +184,7 @@ export default function KehamilanDetailPage() {
       {/* Back */}
       <div className="flex justify-start mb-4">
         <button
-          onClick={() => router.push("/dashboard/kehamilan")}
+          onClick={() => isDirty ? setBackConfirmOpen(true) : router.push("/dashboard/kehamilan")}
           className="flex items-center gap-2 text-rose-600 hover:text-rose-800 font-medium text-sm"
         >
           <FaArrowLeft /> Kembali
@@ -245,6 +269,15 @@ export default function KehamilanDetailPage() {
           <OtherRecords records={otherRecords} />
         ) : null}
       </div>
+
+      <ConfirmModal
+        open={backConfirmOpen}
+        onClose={() => setBackConfirmOpen(false)}
+        onConfirm={() => router.push("/dashboard/kehamilan")}
+        title="Perubahan Belum Disimpan"
+        message="Ada perubahan yang belum disimpan. Keluar halaman ini akan membatalkan semua perubahan."
+        confirmLabel="Keluar Tanpa Simpan"
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { FaTrash, FaExclamationTriangle } from "react-icons/fa";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +25,13 @@ export default function ConfirmModal({
   confirmLabel = "Ya, Hapus",
   loading = false,
 }) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === "Escape" && !loading) onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, loading, onClose]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -61,6 +69,7 @@ export default function ConfirmModal({
                 <button
                   onClick={() => !loading && onClose()}
                   disabled={loading}
+                  aria-label="Tutup"
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition shrink-0 -mr-1"
                 >
                   <X size={14} />
