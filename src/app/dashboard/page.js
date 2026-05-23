@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { FaUsers, FaHeartbeat, FaBaby, FaChevronRight, FaHospital } from "react-icons/fa";
-import { Settings2 } from "lucide-react";
+import { Settings2, AlertTriangle, Clock, CalendarX } from "lucide-react";
 import { fetcher } from "@/lib/fetcher";
 
 const modules = [
@@ -17,7 +17,6 @@ const modules = [
     border: "border-slate-200 hover:border-blue-200",
     text: "text-blue-700",
     chevron: "text-blue-300 group-hover:text-blue-500",
-    glow: "shadow-blue-100",
   },
   {
     href: "/dashboard/kb",
@@ -29,7 +28,6 @@ const modules = [
     border: "border-slate-200 hover:border-violet-200",
     text: "text-violet-700",
     chevron: "text-violet-300 group-hover:text-violet-500",
-    glow: "shadow-violet-100",
   },
   {
     href: "/dashboard/kehamilan",
@@ -41,7 +39,6 @@ const modules = [
     border: "border-slate-200 hover:border-pink-200",
     text: "text-pink-700",
     chevron: "text-pink-300 group-hover:text-pink-500",
-    glow: "shadow-pink-100",
   },
   {
     href: "/dashboard/persalinan",
@@ -53,7 +50,6 @@ const modules = [
     border: "border-slate-200 hover:border-emerald-200",
     text: "text-emerald-700",
     chevron: "text-emerald-300 group-hover:text-emerald-500",
-    glow: "shadow-emerald-100",
   },
   {
     href: "/dashboard/config",
@@ -65,15 +61,14 @@ const modules = [
     border: "border-slate-200 hover:border-slate-300",
     text: "text-slate-700",
     chevron: "text-slate-300 group-hover:text-slate-500",
-    glow: "shadow-slate-100",
   },
 ];
 
 const statCards = [
   {
-    key: "patients",
+    key: "pasien",
     icon: FaUsers,
-    label: "Pasien",
+    label: "Total Pasien",
     from: "from-blue-500",
     to: "to-blue-600",
     ring: "ring-blue-200",
@@ -89,13 +84,22 @@ const statCards = [
     href: "/dashboard/kb",
   },
   {
-    key: "kehamilan",
+    key: "kehamilanAktif",
     icon: FaBaby,
-    label: "Ibu Hamil",
+    label: "Ibu Hamil Aktif",
     from: "from-pink-500",
     to: "to-rose-500",
     ring: "ring-pink-200",
     href: "/dashboard/kehamilan",
+  },
+  {
+    key: "persalinanAktif",
+    icon: FaHospital,
+    label: "Ibu Nifas",
+    from: "from-emerald-500",
+    to: "to-teal-500",
+    ring: "ring-emerald-200",
+    href: "/dashboard/persalinan",
   },
 ];
 
@@ -119,9 +123,48 @@ function StatCard({ icon: Icon, label, value, from, to, ring, href }) {
   );
 }
 
+const alertItems = [
+  {
+    key: "hplDekat",
+    icon: Clock,
+    label: (n) => `${n} ibu hamil dengan HPL dalam 14 hari`,
+    href: "/dashboard/kehamilan",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    text: "text-amber-800",
+    iconColor: "text-amber-500",
+  },
+  {
+    key: "hplOverdue",
+    icon: CalendarX,
+    label: (n) => `${n} ibu hamil dengan HPL telah lewat`,
+    href: "/dashboard/kehamilan",
+    bg: "bg-red-50",
+    border: "border-red-200",
+    text: "text-red-800",
+    iconColor: "text-red-500",
+  },
+  {
+    key: "jadwalTerlewat",
+    icon: AlertTriangle,
+    label: (n) => `${n} jadwal kunjungan ANC belum terpenuhi`,
+    href: "/dashboard/kehamilan",
+    bg: "bg-orange-50",
+    border: "border-orange-200",
+    text: "text-orange-800",
+    iconColor: "text-orange-500",
+  },
+];
+
 export default function DashboardHomePage() {
   const [now, setNow] = useState(null);
-  const [stats, setStats] = useState({ patients: null, kb: null, kehamilan: null });
+  const [stats, setStats] = useState({
+    pasien: null,
+    kb: null,
+    kehamilanAktif: null,
+    persalinanAktif: null,
+    alerts: { hplDekat: 0, hplOverdue: 0, jadwalTerlewat: 0 },
+  });
 
   useEffect(() => {
     setNow(new Date());
@@ -130,17 +173,9 @@ export default function DashboardHomePage() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      fetcher("/api/patients?limit=1&page=1"),
-      fetcher("/api/kb?limit=1&page=1"),
-      fetcher("/api/kehamilan?limit=1&page=1"),
-    ])
-      .then(([p, k, kh]) => {
-        setStats({
-          patients: p?.totalPages ?? 0,
-          kb: k?.totalPages ?? 0,
-          kehamilan: kh?.totalPages ?? 0,
-        });
+    fetcher("/api/dashboard")
+      .then((res) => {
+        if (res?.data) setStats((prev) => ({ ...prev, ...res.data }));
       })
       .catch(() => {});
   }, []);
@@ -164,6 +199,8 @@ export default function DashboardHomePage() {
     [now]
   );
 
+  const activeAlerts = alertItems.filter((a) => (stats.alerts?.[a.key] ?? 0) > 0);
+
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       {/* Welcome banner */}
@@ -171,7 +208,8 @@ export default function DashboardHomePage() {
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-16 -right-16 w-56 h-56 bg-blue-600/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-16 -left-8 w-48 h-48 bg-indigo-600/15 rounded-full blur-3xl" />
-          <div className="absolute inset-0 opacity-[0.03]"
+          <div
+            className="absolute inset-0 opacity-[0.03]"
             style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "24px 24px" }}
           />
         </div>
@@ -197,7 +235,7 @@ export default function DashboardHomePage() {
       {/* Stats */}
       <div>
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 px-0.5">Ringkasan Data</p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {statCards.map((s) => (
             <StatCard
               key={s.key}
@@ -212,6 +250,30 @@ export default function DashboardHomePage() {
           ))}
         </div>
       </div>
+
+      {/* Alerts */}
+      {activeAlerts.length > 0 && (
+        <div>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 px-0.5">Perlu Perhatian</p>
+          <div className="flex flex-col gap-2">
+            {activeAlerts.map((a) => {
+              const AlertIcon = a.icon;
+              const count = stats.alerts?.[a.key] ?? 0;
+              return (
+                <Link
+                  key={a.key}
+                  href={a.href}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${a.bg} ${a.border} transition-all duration-150 hover:shadow-sm hover:-translate-y-px`}
+                >
+                  <AlertIcon size={15} className={`shrink-0 ${a.iconColor}`} />
+                  <p className={`text-xs font-semibold flex-1 ${a.text}`}>{a.label(count)}</p>
+                  <FaChevronRight size={9} className={`shrink-0 ${a.iconColor} opacity-60`} />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Module grid */}
       <div>
