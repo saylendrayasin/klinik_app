@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import PWAUpdatePrompt from "@/components/PWAUpdatePrompt";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         {children}
         <Toaster position="top-center" reverseOrder={false} />
+        <PWAUpdatePrompt />
       </body>
     </html>
   );

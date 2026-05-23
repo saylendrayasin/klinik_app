@@ -88,6 +88,18 @@ export default function KehamilanDetailPage() {
   const [activeTab, setActiveTab] = useState("calendar");
   const [otherRecords, setOtherRecords] = useState([]);
   const [backConfirmOpen, setBackConfirmOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    nik: "",
+    dateOfBirth: "",
+    address: "",
+    phone: "",
+    bloodType: "",
+    gravida: 1,
+    para: 0,
+    abortus: 0,
+    hpht: "",
+  });
 
   const savedForm = useMemo(() => ({
     name: kehamilan?.name || "",
@@ -110,19 +122,6 @@ export default function KehamilanDetailPage() {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
-
-  const [form, setForm] = useState({
-    name: "",
-    nik: "",
-    dateOfBirth: "",
-    address: "",
-    phone: "",
-    bloodType: "",
-    gravida: 1,
-    para: 0,
-    abortus: 0,
-    hpht: "",
-  });
 
   const fetchData = async () => {
     try {

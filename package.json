@@ -1,6 +1,6 @@
 {
   "name": "klinik_app",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev-clear": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){if(e.code!=='EPERM')throw e;console.warn('[dev-clear] .next terkunci, skip hapus:',e.message)}\" && next dev --turbopack",
