@@ -42,9 +42,14 @@ function DataItem({ label, value, className = "" }) {
   return (
     <div className={className}>
       <span className="text-xs text-gray-400 uppercase tracking-wide">{label}</span>
-      <p className="font-medium text-gray-800">{value || "-"}</p>
+      <p className="font-medium text-gray-800 line-clamp-2">{value || "-"}</p>
     </div>
   );
+}
+
+function fmtMedication(med) {
+  if (!med) return "";
+  return med.split(/\n+/).map((s) => s.trim()).filter(Boolean).join(", ");
 }
 
 export default function DashboardPatientDetailPage() {
@@ -458,6 +463,14 @@ export default function DashboardPatientDetailPage() {
                             <DataItem label="Catatan" value={visit.notes} />
                           )}
                         </div>
+                        {visit.medication && (
+                          <div>
+                            <span className="text-xs text-gray-400 uppercase tracking-wide">Obat</span>
+                            <p className="font-medium text-gray-800 mt-0.5 line-clamp-2 break-words">
+                              {fmtMedication(visit.medication)}
+                            </p>
+                          </div>
+                        )}
                         {diagLabels.length > 0 && (
                           <div>
                             <span className="text-xs text-gray-400 uppercase tracking-wide">Diagnosis</span>

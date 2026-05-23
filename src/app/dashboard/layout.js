@@ -106,7 +106,12 @@ function SidebarContent({ pathname, onLinkClick, onSignOut }) {
         </div>
         <div className="min-w-0">
           <p className="text-white font-bold text-sm truncate leading-tight">Klinik Iya</p>
-          <p className="text-slate-500 text-xs mt-0.5">Sistem Manajemen</p>
+          <p className="text-slate-500 text-xs mt-0.5">
+            Sistem Manajemen
+            {process.env.NEXT_PUBLIC_APP_VERSION && (
+              <span className="ml-1.5 text-slate-600 font-mono">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
+            )}
+          </p>
         </div>
       </div>
 

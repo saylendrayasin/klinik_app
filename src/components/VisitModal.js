@@ -75,10 +75,10 @@ export default function VisitModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden"
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden"
           >
-            <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-400" />
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-400 shrink-0" />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
               <h2 className="text-base font-bold text-slate-800">
                 {mode === "add" ? "Tambah Kunjungan Baru" : "Edit Kunjungan"}
               </h2>
@@ -92,63 +92,65 @@ export default function VisitModal({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="visit-date" className="text-sm font-semibold text-slate-700">
-                  Tanggal Kunjungan <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="visit-date"
-                  name="date"
-                  type="date"
-                  value={form.date}
-                  onChange={handleChange}
-                  max={todayStr()}
-                  required
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-300 transition"
-                />
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="p-5 space-y-4 overflow-y-auto flex-1">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="visit-date" className="text-sm font-semibold text-slate-700">
+                    Tanggal Kunjungan <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="visit-date"
+                    name="date"
+                    type="date"
+                    value={form.date}
+                    onChange={handleChange}
+                    max={todayStr()}
+                    required
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-300 transition"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Diagnosis Kunjungan</label>
+                  <DiagnosisSelect
+                    value={form.visitDiagnosisIds}
+                    onChange={handleDiagnosisChange}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="visit-complaint" className="text-sm font-semibold text-slate-700">
+                    Keluhan Pasien <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="visit-complaint"
+                    name="complaint"
+                    value={form.complaint}
+                    onChange={handleChange}
+                    placeholder="Masukkan keluhan pasien..."
+                    required
+                    rows={4}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-300 transition resize-y placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="visit-medication" className="text-sm font-semibold text-slate-700">
+                    Obat yang Diberikan
+                  </label>
+                  <textarea
+                    id="visit-medication"
+                    name="medication"
+                    value={form.medication}
+                    onChange={handleChange}
+                    placeholder="Masukkan nama obat..."
+                    rows={3}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-300 transition resize-y placeholder:text-slate-400"
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Diagnosis Kunjungan</label>
-                <DiagnosisSelect
-                  value={form.visitDiagnosisIds}
-                  onChange={handleDiagnosisChange}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="visit-complaint" className="text-sm font-semibold text-slate-700">
-                  Keluhan Pasien <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="visit-complaint"
-                  name="complaint"
-                  value={form.complaint}
-                  onChange={handleChange}
-                  placeholder="Masukkan keluhan pasien..."
-                  required
-                  rows={2}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-300 transition resize-none placeholder:text-slate-400"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="visit-medication" className="text-sm font-semibold text-slate-700">
-                  Obat yang Diberikan
-                </label>
-                <textarea
-                  id="visit-medication"
-                  name="medication"
-                  value={form.medication}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama obat..."
-                  rows={2}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-300 transition resize-none placeholder:text-slate-400"
-                />
-              </div>
-
-              <div className="flex gap-2.5 pt-1 border-t border-slate-100">
+              <div className="flex gap-2.5 px-5 py-4 border-t border-slate-100 shrink-0">
                 <button
                   type="button"
                   onClick={onClose}

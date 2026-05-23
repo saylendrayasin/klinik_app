@@ -1,4 +1,8 @@
 import withPWAInit from "@ducanh2912/next-pwa";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const { version } = require("./package.json");
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -65,6 +69,9 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_APP_VERSION: version,
+  },
 };
 
 export default withPWA(nextConfig);
