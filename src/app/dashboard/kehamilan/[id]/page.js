@@ -2,38 +2,35 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
+import DetailHeader from "@/components/DetailHeader";
+import TabBar from "@/components/TabBar";
 import { fetcher } from "@/lib/fetcher";
 import KehamilanEditForm from "./kehamilanEditForm";
 import ConfirmModal from "@/components/ConfirmModal";
 import CalendarKehamilan from "./CalendarKehamilan";
 import KehamilanVisitTab from "./KehamilanVisitTab";
 import {
-  FaArrowLeft,
   FaCalendarAlt,
   FaEdit,
   FaListUl,
   FaBaby,
 } from "react-icons/fa";
+import { tanggalSingkat as fmtDate } from "@/lib/tanggal";
+import { SkeletonKartu } from "@/components/Skeleton";
+import { TidakDitemukan } from "@/components/KeadaanKosong";
+import { AlertTriangle, ChevronRight } from "lucide-react";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-function fmtDate(d) {
-  if (!d) return "-";
-  try {
-    return new Date(d).toLocaleDateString("id-ID");
-  } catch {
-    return "-";
-  }
-}
-
 function getAlerts(kehamilan) {
-  if (!kehamilan) return [];
+  // Selesai/keguguran/rujuk tidak lagi dipantau di sini — sama dengan ringkasan di daftar.
+  if (!kehamilan || kehamilan.status !== "aktif") return [];
   const today = new Date();
   const hpl = kehamilan.hpl ? new Date(kehamilan.hpl) : null;
   const alerts = [];
 
   if (hpl && today > hpl && kehamilan.status === "aktif") {
-    alerts.push({ type: "red", msg: "⚠️ HPL sudah terlewat — pertimbangkan update status kehamilan" });
+    alerts.push({ type: "red", msg: "HPL sudah terlewat — pertimbangkan update status kehamilan" });
   }
 
   const sorted = [...(kehamilan.visits || [])].sort(
@@ -47,7 +44,7 @@ function getAlerts(kehamilan) {
       : null;
 
     if (uk != null && uk > 40) {
-      alerts.push({ type: "red", msg: `⚠️ Usia kehamilan sudah ${uk} minggu (>40 minggu)` });
+      alerts.push({ type: "red", msg: `Usia kehamilan sudah ${uk} minggu (>40 minggu)` });
     }
 
     const isTD =
@@ -55,7 +52,7 @@ function getAlerts(kehamilan) {
     if (isTD) {
       alerts.push({
         type: "red",
-        msg: `⚠️ TD terakhir ${lastVisit.tekananDarahSistol}/${lastVisit.tekananDarahDiastol} — perhatikan risiko preeklampsia`,
+        msg: `TD terakhir ${lastVisit.tekananDarahSistol}/${lastVisit.tekananDarahDiastol} — perhatikan risiko preeklampsia`,
       });
     }
 
@@ -65,11 +62,11 @@ function getAlerts(kehamilan) {
       );
       alerts.push({
         type: "yellow",
-        msg: `⚠️ Jadwal kunjungan ${fmtDate(lastVisit.jadwalBerikutnya)} belum terpenuhi (${daysLate} hari lalu)`,
+        msg: `Jadwal kunjungan ${fmtDate(lastVisit.jadwalBerikutnya)} belum terpenuhi (${daysLate} hari lalu)`,
       });
     }
   } else if (kehamilan.status === "aktif") {
-    alerts.push({ type: "yellow", msg: "⚠️ Belum ada kunjungan ANC yang tercatat" });
+    alerts.push({ type: "yellow", msg: "Belum ada kunjungan ANC yang tercatat" });
   }
 
   return alerts;
@@ -123,11 +120,13 @@ export default function KehamilanDetailPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
-  const fetchData = async () => {
+  // `pertahankanForm`: dipakai saat status diubah — memuat ulang data tidak boleh
+  // menimpa isian form Edit Data yang belum disimpan.
+  const fetchData = async (pertahankanForm = false) => {
     try {
       const { data } = await fetcher(`/api/kehamilan/${params.id}`);
       setKehamilan(data);
-      setForm({
+      if (!pertahankanForm) setForm({
         name: data.name || "",
         nik: data.nik || "",
         dateOfBirth: data.dateOfBirth
@@ -165,7 +164,7 @@ export default function KehamilanDetailPage() {
   const alerts = getAlerts(kehamilan);
   const today = new Date();
   const ukNow =
-    kehamilan?.hpht
+    kehamilan?.status === "aktif" && kehamilan.hpht
       ? Math.floor((today - new Date(kehamilan.hpht)) / (7 * MS_PER_DAY))
       : null;
 
@@ -180,79 +179,48 @@ export default function KehamilanDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Back */}
-      <div className="flex justify-start mb-4">
-        <button
-          onClick={() => isDirty ? setBackConfirmOpen(true) : router.push("/dashboard/kehamilan")}
-          className="flex items-center gap-2 text-rose-600 hover:text-rose-800 font-medium text-sm"
-        >
-          <FaArrowLeft /> Kembali
-        </button>
-      </div>
-
-      {/* Info header */}
-      {kehamilan && !loading && (
-        <div className="bg-white border rounded-lg shadow-sm px-4 py-3 mb-4">
-          <div className="flex items-center gap-2 mb-1 min-w-0">
-            <h2 className="font-bold text-gray-800 text-base truncate flex-1 min-w-0">
-              {kehamilan.name}
-            </h2>
-            <span className={`shrink-0 capitalize text-xs font-semibold px-2 py-0.5 rounded-full ${
-              kehamilan.status === "aktif" ? "bg-rose-100 text-rose-700" :
-              kehamilan.status === "selesai" ? "bg-green-100 text-green-700" :
-              kehamilan.status === "keguguran" ? "bg-gray-100 text-gray-600" :
-              "bg-amber-100 text-amber-700"
-            }`}>
-              {kehamilan.status}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
-            <span>NIK: {kehamilan.nik}</span>
-            <span>G{kehamilan.gravida || 0}P{kehamilan.para || 0}A{kehamilan.abortus || 0}</span>
-            <span>HPL: <strong className="text-gray-700">{fmtDate(kehamilan.hpl)}</strong></span>
-            {ukNow != null && (
-              <span className="text-rose-700 font-semibold">UK: {ukNow} minggu</span>
-            )}
-          </div>
-        </div>
-      )}
+      <DetailHeader
+        onBack={() => isDirty ? setBackConfirmOpen(true) : router.push("/dashboard/kehamilan")}
+        loading={loading}
+        title={kehamilan?.name}
+        badge={kehamilan && (
+          <span className={`shrink-0 capitalize text-xs font-semibold px-2.5 py-1 rounded-full ${
+            kehamilan.status === "aktif" ? "bg-brand-100 text-brand-700" :
+            kehamilan.status === "selesai" ? "bg-green-100 text-green-700" :
+            kehamilan.status === "keguguran" ? "bg-slate-100 text-slate-600" :
+            "bg-amber-100 text-amber-700"
+          }`}>
+            {kehamilan.status}
+          </span>
+        )}
+        meta={kehamilan ? [
+          <>NIK: {kehamilan.nik}</>,
+          <>G{kehamilan.gravida || 0}P{kehamilan.para || 0}A{kehamilan.abortus || 0}</>,
+          <>HPL: <strong className="text-slate-700">{fmtDate(kehamilan.hpl)}</strong></>,
+          ukNow != null && <span className="text-brand-700 font-semibold">UK: {ukNow} minggu</span>,
+        ] : []}
+      />
 
       {/* Alerts */}
       {alerts.length > 0 && (
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2 mb-4" role="status">
           {alerts.map((a, i) => (
-            <div key={i} className={`rounded-lg px-4 py-2.5 text-sm ${ALERT_STYLE[a.type]}`}>
-              {a.msg}
+            <div key={i} className={`flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm font-medium ${ALERT_STYLE[a.type]}`}>
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" aria-hidden="true" />
+              <span>{a.msg}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
-        {tabs.map(({ key, label, icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm whitespace-nowrap rounded-t-md transition-all ${
-              activeTab === key
-                ? "bg-rose-100 text-rose-700 border-b-2 border-rose-600"
-                : "text-gray-600 hover:text-rose-600"
-            }`}
-          >
-            {icon} {label}
-          </button>
-        ))}
-      </div>
+      <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       {/* Tab content */}
-      <div>
+      <div key={activeTab} className="anim-masuk">
         {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="w-8 h-8 border-4 border-rose-500 border-dashed rounded-full animate-spin" />
-          </div>
+          <SkeletonKartu />
         ) : !kehamilan ? (
-          <div className="text-center text-red-500">Data tidak ditemukan.</div>
+          <TidakDitemukan kembaliKe="/dashboard/kehamilan" judul="Data kehamilan tidak ditemukan" />
         ) : activeTab === "calendar" ? (
           <CalendarKehamilan kehamilan={kehamilan} />
         ) : activeTab === "data" ? (
@@ -261,9 +229,11 @@ export default function KehamilanDetailPage() {
             form={form}
             setForm={setForm}
             onRefresh={fetchData}
+            dirty={isDirty}
+            onReset={() => setForm(savedForm)}
           />
         ) : activeTab === "visits" ? (
-          <KehamilanVisitTab kehamilan={kehamilan} onRefresh={fetchData} />
+          <KehamilanVisitTab kehamilan={kehamilan} onRefresh={() => fetchData(true)} />
         ) : activeTab === "others" ? (
           <OtherRecords records={otherRecords} />
         ) : null}
@@ -286,33 +256,34 @@ function OtherRecords({ records }) {
   if (records.length === 0) return null;
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-600">Kehamilan lain dengan NIK yang sama:</p>
+      <p className="text-sm text-slate-500">Kehamilan lain dengan NIK yang sama</p>
       {records.map((r) => (
         <button
           key={r._id}
           onClick={() => router.push(`/dashboard/kehamilan/${r._id}`)}
-          className="w-full bg-white border rounded-lg p-4 text-left hover:shadow-md hover:border-rose-300 transition"
+          className="group w-full bg-white border border-slate-200 rounded-2xl p-4 text-left shadow-sm shadow-slate-900/[0.03] hover:shadow-md hover:shadow-brand-900/5 hover:border-brand-200 transition active:scale-[0.99]"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-gray-800 text-sm">
-                HPHT: {r.hpht ? new Date(r.hpht).toLocaleDateString("id-ID") : "-"}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-slate-800 text-sm">
+                HPHT: {r.hpht ? fmtDate(r.hpht) : "-"}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                HPL: {r.hpl ? new Date(r.hpl).toLocaleDateString("id-ID") : "-"} &bull;{" "}
+              <p className="text-xs text-slate-500 mt-0.5">
+                HPL: {r.hpl ? fmtDate(r.hpl) : "-"} &bull;{" "}
                 {r.visits?.length || 0} kunjungan
               </p>
             </div>
             <span
               className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${
-                r.status === "aktif" ? "bg-rose-100 text-rose-700" :
+                r.status === "aktif" ? "bg-brand-100 text-brand-700" :
                 r.status === "selesai" ? "bg-green-100 text-green-700" :
-                r.status === "keguguran" ? "bg-gray-100 text-gray-600" :
+                r.status === "keguguran" ? "bg-slate-100 text-slate-600" :
                 "bg-amber-100 text-amber-700"
               }`}
             >
               {r.status}
             </span>
+            <ChevronRight size={16} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" aria-hidden="true" />
           </div>
         </button>
       ))}

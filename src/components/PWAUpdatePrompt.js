@@ -17,7 +17,7 @@ export default function PWAUpdatePrompt() {
             <span className="text-sm font-medium text-slate-800">Versi baru tersedia!</span>
             <button
               onClick={() => { toast.dismiss(t.id); window.location.reload(); }}
-              className="shrink-0 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition"
+              className="shrink-0 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg transition"
             >
               Perbarui
             </button>

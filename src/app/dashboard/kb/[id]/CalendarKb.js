@@ -45,8 +45,8 @@ export default function CalendarKb({ kb }) {
     if (!hasDatang && !hasKembali) return null;
     return (
       <div className="mt-1 flex justify-center gap-0.5">
-        {hasDatang && <span className="w-2 h-2 rounded-full bg-violet-600 ring-1 ring-violet-300" title="Tanggal Datang" />}
-        {hasKembali && <span className="w-2 h-2 rounded-full bg-pink-500 ring-1 ring-pink-300" title="Tanggal Kembali" />}
+        {hasDatang && <span className="w-2 h-2 rounded-full bg-brand-600 ring-1 ring-brand-300" title="Tanggal Datang" />}
+        {hasKembali && <span className="w-2.5 h-2.5 rounded-full border-2 border-brand-500 bg-white" title="Tanggal Kembali" />}
       </div>
     );
   };
@@ -60,7 +60,6 @@ export default function CalendarKb({ kb }) {
     <div className="max-w-4xl mx-auto space-y-4">
       {/* Calendar card */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-violet-500 to-violet-400" />
         <div className="p-4">
           <Calendar
             onChange={setSelectedDate}
@@ -74,12 +73,12 @@ export default function CalendarKb({ kb }) {
 
       {/* Legend */}
       <div className="flex flex-wrap justify-center gap-2 text-xs">
-        <span className="flex items-center gap-1.5 bg-violet-50 border border-violet-200 text-violet-700 px-3 py-1.5 rounded-full font-medium">
-          <span className="w-2 h-2 rounded-full bg-violet-600 ring-1 ring-violet-300" />
+        <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-200 text-brand-700 px-3 py-1.5 rounded-full font-medium">
+          <span className="w-2 h-2 rounded-full bg-brand-600 ring-1 ring-brand-300" />
           Tanggal Datang
         </span>
-        <span className="flex items-center gap-1.5 bg-pink-50 border border-pink-200 text-pink-700 px-3 py-1.5 rounded-full font-medium">
-          <span className="w-2 h-2 rounded-full bg-pink-500 ring-1 ring-pink-300" />
+        <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-200 text-brand-700 px-3 py-1.5 rounded-full font-medium">
+          <span className="w-2.5 h-2.5 rounded-full border-2 border-brand-500 bg-white" />
           Tanggal Kembali
         </span>
       </div>
@@ -87,17 +86,16 @@ export default function CalendarKb({ kb }) {
       {/* Detail panel */}
       {hasDetail ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-violet-500 to-violet-400" />
           <div className="p-4 sm:p-5">
             <h3 className="font-bold text-slate-800 text-sm mb-3">
               {fmtFull(selectedDate)}
             </h3>
             <div className="space-y-3">
               {datangVisits.map((v, i) => (
-                <div key={`datang-${i}`} className="rounded-xl bg-violet-50 border border-violet-100 p-3.5 space-y-1.5">
-                  <p className="text-xs font-bold text-violet-700 uppercase tracking-wide">Tanggal Datang</p>
+                <div key={`datang-${i}`} className="rounded-xl bg-brand-50 border border-brand-100 p-3.5 space-y-1.5">
+                  <p className="text-xs font-bold text-brand-700 uppercase tracking-wide">Tanggal Datang</p>
                   <p className="text-sm font-semibold text-slate-800">
-                    Metode: <span className="text-violet-700">{v.metode || "-"}</span>
+                    Metode: <span className="text-brand-700">{v.metode || "-"}</span>
                   </p>
                   {v.notes && <p className="text-xs text-slate-500">Catatan: {v.notes}</p>}
                   {v.returnDate && (
@@ -108,10 +106,10 @@ export default function CalendarKb({ kb }) {
                 </div>
               ))}
               {kembaliVisits.map((v, i) => (
-                <div key={`kembali-${i}`} className="rounded-xl bg-pink-50 border border-pink-100 p-3.5 space-y-1.5">
-                  <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">Tanggal Kembali</p>
+                <div key={`kembali-${i}`} className="rounded-xl bg-white border border-brand-200 p-3.5 space-y-1.5">
+                  <p className="text-xs font-bold text-brand-700 uppercase tracking-wide">Tanggal Kembali</p>
                   <p className="text-sm font-semibold text-slate-800">
-                    Metode: <span className="text-pink-700">{v.metode || "-"}</span>
+                    Metode: <span className="text-brand-700">{v.metode || "-"}</span>
                   </p>
                   {v.notes && <p className="text-xs text-slate-500">Catatan: {v.notes}</p>}
                   {v.date && (

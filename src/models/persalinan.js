@@ -140,5 +140,16 @@ const persalinanSchema = new mongoose.Schema(
 // NIK tidak unique — satu ibu bisa punya lebih dari satu record persalinan
 persalinanSchema.index({ nik: 1 });
 
+// Field data ibu & proses persalinan yang boleh diisi klien (POST dan PATCH updateData).
+// Bayi, visits, status, hariPascaSalin dan nomorKF diatur lewat aksi masing-masing.
+export const FIELD_DATA_PERSALINAN = [
+  "name", "nik", "dateOfBirth", "address", "phone", "bloodType",
+  "gravida", "para", "abortus", "usiaKehamilanSaatPersalinan",
+  "lamaPersalinanKala1", "lamaPersalinanKala2", "lamaPersalinanKala3", "lamaPersalinanKala4",
+  "kondisiKetuban", "kondisiPerineumPersalinan", "plasentaLengkap",
+  "tekananDarahSistol", "tekananDarahDiastol", "beratBadan", "pendarahan",
+  "kondisiIbu", "komplikasiIbu", "tindakanIbu", "tanggalPersalinan", "notes",
+];
+
 export const Persalinan =
   mongoose.models.Persalinan || mongoose.model("Persalinan", persalinanSchema);

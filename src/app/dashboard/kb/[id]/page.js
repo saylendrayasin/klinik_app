@@ -1,12 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import KbEditForm from "./kbEditForm";
 import CalendarKb from "./CalendarKb";
 import KbVisitsTab from "./KbVisitTab";
-import { FaArrowLeft, FaCalendarAlt, FaEdit, FaListUl } from "react-icons/fa";
+import { FaCalendarAlt, FaEdit, FaListUl } from "react-icons/fa";
 import { useRouter, useParams } from "next/navigation";
+import DetailHeader from "@/components/DetailHeader";
+import TabBar from "@/components/TabBar";
 import { fetcher } from "@/lib/fetcher";
+import { SkeletonKartu } from "@/components/Skeleton";
+import { TidakDitemukan } from "@/components/KeadaanKosong";
+import ConfirmModal from "@/components/ConfirmModal";
+
+function formDari(data) {
+  return {
+    name: data?.name || "",
+    dateOfBirth: data?.dateOfBirth ? new Date(data.dateOfBirth).toISOString().slice(0, 10) : "",
+    address: data?.address || "",
+    nik: data?.nik || "",
+    numberOfChildren: data?.numberOfChildren || 0,
+  };
+}
+
+function umurDari(tgl) {
+  if (!tgl) return null;
+  const lahir = new Date(tgl);
+  const kini = new Date();
+  let umur = kini.getFullYear() - lahir.getFullYear();
+  const belumUltah =
+    kini.getMonth() < lahir.getMonth() ||
+    (kini.getMonth() === lahir.getMonth() && kini.getDate() < lahir.getDate());
+  if (belumUltah) umur--;
+  return Number.isFinite(umur) ? umur : null;
+}
 
 export default function KbEditPage() {
   const router = useRouter();
@@ -15,27 +42,25 @@ export default function KbEditPage() {
   const [loading, setLoading] = useState(true);
 
   const [kb, setKb] = useState(null);
-  const [form, setForm] = useState({
-    name: "",
-    dateOfBirth: "",
-    address: "",
-    nik: "",
-    numberOfChildren: 0,
-  });
+  const [backConfirmOpen, setBackConfirmOpen] = useState(false);
+  const [form, setForm] = useState(formDari(null));
+
+  // Sama seperti Pasien & Kehamilan: jangan biarkan ketikan hilang tanpa peringatan.
+  const savedForm = useMemo(() => formDari(kb), [kb]);
+  const isDirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const fetchKb = async () => {
     try {
       const { data } = await fetcher(`/api/kb/${params.id}`);
       setKb(data);
-      setForm({
-        name: data.name || "",
-        dateOfBirth: data.dateOfBirth
-          ? new Date(data.dateOfBirth).toISOString().slice(0, 10)
-          : "",
-        address: data.address || "",
-        nik: data.nik || "",
-        numberOfChildren: data.numberOfChildren || 0,
-      });
+      setForm(formDari(data));
     } catch (error) {
       console.error(error);
     } finally {
@@ -49,60 +74,38 @@ export default function KbEditPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-start mb-4">
-        <button
-          onClick={() => router.push("/dashboard/kb")}
-          className="flex items-center gap-2 text-purple-600 hover:text-purple-800"
-        >
-          <FaArrowLeft /> Kembali
-        </button>
-      </div>
+      <DetailHeader
+        onBack={() => isDirty ? setBackConfirmOpen(true) : router.push("/dashboard/kb")}
+        loading={loading}
+        title={kb?.name}
+        badge={kb?.metodes?.length > 0 && (
+          <span className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-100 text-brand-700">
+            {kb.metodes[kb.metodes.length - 1]}
+          </span>
+        )}
+        meta={kb ? [
+          kb.nik && <>NIK: {kb.nik}</>,
+          umurDari(kb.dateOfBirth) != null && <>Umur: <strong className="text-slate-700">{umurDari(kb.dateOfBirth)} tahun</strong></>,
+          <>Anak: <strong className="text-slate-700">{kb.numberOfChildren || 0}</strong></>,
+          <>Kunjungan: <strong className="text-slate-700">{kb.visits?.length || 0}x</strong></>,
+        ] : []}
+      />
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-6">
-        <button
-          onClick={() => setActiveTab("calendar")}
-          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
-            activeTab === "calendar"
-              ? "bg-purple-100 text-purple-700 border-b-2 border-purple-600"
-              : "text-gray-600 hover:text-purple-600"
-          }`}
-        >
-          <FaCalendarAlt /> Kalender
-        </button>
+      <TabBar
+        tabs={[
+          { key: "calendar", label: "Kalender", icon: <FaCalendarAlt /> },
+          { key: "data", label: "Edit Data", icon: <FaEdit /> },
+          { key: "visits", label: "Kunjungan", icon: <FaListUl /> },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
-        <button
-          onClick={() => setActiveTab("data")}
-          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
-            activeTab === "data"
-              ? "bg-purple-100 text-purple-700 border-b-2 border-purple-600"
-              : "text-gray-600 hover:text-purple-600"
-          }`}
-        >
-          <FaEdit /> Edit Data
-        </button>
-
-        <button
-          onClick={() => setActiveTab("visits")}
-          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm rounded-t-md transition-all duration-150 ${
-            activeTab === "visits"
-              ? "bg-purple-100 text-purple-700 border-b-2 border-purple-600"
-              : "text-gray-600 hover:text-purple-600"
-          }`}
-        >
-          <FaListUl /> Kunjungan
-        </button>
-      </div>
-
-      <div>
+      <div key={activeTab} className="anim-masuk">
         {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="w-8 h-8 border-4 border-purple-500 border-dashed rounded-full animate-spin"></div>
-          </div>
+          <SkeletonKartu />
         ) : !kb ? (
-          <div className="text-center text-red-500">
-            Data KB tidak ditemukan.
-          </div>
+          <TidakDitemukan kembaliKe="/dashboard/kb" judul="Data KB tidak ditemukan" />
         ) : activeTab === "calendar" ? (
           <CalendarKb kb={kb} />
         ) : activeTab === "data" ? (
@@ -111,11 +114,22 @@ export default function KbEditPage() {
             form={form}
             setForm={setForm}
             onRefresh={fetchKb}
+            dirty={isDirty}
+            onReset={() => setForm(savedForm)}
           />
         ) : (
           <KbVisitsTab kb={kb} onRefresh={fetchKb} />
         )}
       </div>
+
+      <ConfirmModal
+        open={backConfirmOpen}
+        onClose={() => setBackConfirmOpen(false)}
+        onConfirm={() => router.push("/dashboard/kb")}
+        title="Perubahan Belum Disimpan"
+        message="Ada perubahan yang belum disimpan. Keluar halaman ini akan membatalkan semua perubahan."
+        confirmLabel="Keluar Tanpa Simpan"
+      />
     </div>
   );
 }

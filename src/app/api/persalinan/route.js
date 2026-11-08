@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/database";
-import { Persalinan } from "@/models/persalinan";
-import { successResponse, paginatedResponse, errorResponse } from "@/lib/response";
+import { Persalinan, FIELD_DATA_PERSALINAN } from "@/models/persalinan";
+import { successResponse, paginatedResponse, errorResponse, serverError } from "@/lib/response";
+import { escapeRegex, parsePagination, pilihField } from "@/lib/query";
 
 const ALLOWED_SORT = ["name", "tanggalPersalinan", "createdAt"];
 
@@ -38,7 +39,7 @@ export async function GET(req) {
       const recent = await Persalinan.findOne({ nik: nikExact })
         .sort({ createdAt: -1 })
         .lean();
-      return successResponse("Lookup NIK selesai", recent || null);
+      return successResponse("Pencarian NIK selesai", recent || null);
     }
 
     // NIK list filter untuk riwayat persalinan di detail page
@@ -51,8 +52,7 @@ export async function GET(req) {
       return successResponse("Riwayat persalinan berhasil diambil", records);
     }
 
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 10;
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 10 });
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const filter = searchParams.get("filter") || "";
@@ -61,12 +61,11 @@ export async function GET(req) {
     const belumPersalinan = searchParams.get("belumPersalinan") === "true";
     const rawSort = searchParams.get("sort");
     const sortField = ALLOWED_SORT.includes(rawSort) ? rawSort : "createdAt";
-    const skip = (page - 1) * limit;
 
     const query = {};
 
     if (search) {
-      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escaped = escapeRegex(search);
       query.$or = [
         { name: { $regex: escaped, $options: "i" } },
         { nik: { $regex: escaped, $options: "i" } },
@@ -129,19 +128,22 @@ export async function GET(req) {
 
     return paginatedResponse("Data persalinan berhasil diambil", data, page, totalPages);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil data persalinan", 500);
+    return serverError(error, "Gagal mengambil data persalinan");
   }
 }
 
 export async function POST(req) {
   try {
     await connectDB();
-    const body = await req.json();
-    const created = await Persalinan.create(body);
+    const data = pilihField(await req.json(), FIELD_DATA_PERSALINAN);
+
+    // Samakan dengan PATCH updateData: begitu tanggal persalinan terisi,
+    // record bukan lagi sekadar "terdaftar".
+    if (data.tanggalPersalinan) data.status = "aktif";
+
+    const created = await Persalinan.create(data);
     return successResponse("Data persalinan berhasil ditambahkan", created, 201);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal menambahkan data persalinan", 400, error.message);
+    return serverError(error, "Gagal menambahkan data persalinan");
   }
 }

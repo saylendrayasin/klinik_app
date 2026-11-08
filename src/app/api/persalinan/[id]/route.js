@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
-import { Persalinan } from "@/models/persalinan";
-import { successResponse, errorResponse } from "@/lib/response";
+import { Persalinan, FIELD_DATA_PERSALINAN } from "@/models/persalinan";
+import { successResponse, errorResponse, serverError } from "@/lib/response";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -24,7 +24,7 @@ export async function GET(req, context) {
     if (!doc) return errorResponse("Data persalinan tidak ditemukan", 404);
     return successResponse("Berhasil mengambil data persalinan", doc);
   } catch (error) {
-    return errorResponse("Gagal mengambil data persalinan", 400, error.message);
+    return serverError(error, "Gagal mengambil data persalinan");
   }
 }
 
@@ -79,14 +79,7 @@ export async function PATCH(req, context) {
       doc.status = body.status;
     } else if (action === "updateData") {
       const d = body.data || {};
-      const fields = [
-        "name", "nik", "dateOfBirth", "address", "phone", "bloodType",
-        "gravida", "para", "abortus", "usiaKehamilanSaatPersalinan",
-        "lamaPersalinanKala1", "lamaPersalinanKala2", "lamaPersalinanKala3", "lamaPersalinanKala4",
-        "kondisiKetuban", "kondisiPerineumPersalinan", "plasentaLengkap",
-        "tekananDarahSistol", "tekananDarahDiastol", "beratBadan", "pendarahan",
-        "kondisiIbu", "komplikasiIbu", "tindakanIbu", "tanggalPersalinan", "notes",
-      ];
+      const fields = FIELD_DATA_PERSALINAN;
 
       const oldTanggal = doc.tanggalPersalinan ? new Date(doc.tanggalPersalinan).getTime() : null;
 
@@ -115,17 +108,16 @@ export async function PATCH(req, context) {
       const b = body.bayi || {};
       doc.bayi = { ...((doc.bayi || {}).toObject ? doc.bayi.toObject() : doc.bayi), ...b };
     } else {
-      return errorResponse("Action tidak valid", 400);
+      return errorResponse("Aksi tidak dikenali", 400);
     }
 
     await doc.save();
-    return successResponse("Berhasil update data persalinan", doc);
+    return successResponse("Data persalinan berhasil diperbarui", doc);
   } catch (error) {
-    console.error(error);
     if (error.code === 11000) {
       return errorResponse("Data persalinan dengan NIK yang sama sudah terdaftar", 409);
     }
-    return errorResponse("Gagal update data persalinan", 400, error.message);
+    return serverError(error, "Gagal memperbarui data persalinan");
   }
 }
 
@@ -137,7 +129,6 @@ export async function DELETE(req, context) {
     if (!deleted) return errorResponse("Data persalinan tidak ditemukan", 404);
     return successResponse("Berhasil menghapus data persalinan", deleted);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal menghapus data persalinan", 400, error.message);
+    return serverError(error, "Gagal menghapus data persalinan");
   }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
-import { errorResponse } from "@/lib/response";
+import { errorResponse, serverError } from "@/lib/response";
 
 const secretKey = new TextEncoder().encode(process.env.JWT_SECRET);
 
@@ -29,7 +29,7 @@ export async function POST(req) {
       .sign(secretKey);
 
     const response = NextResponse.json(
-      { status: true, message: "Login berhasil", data: { username } },
+      { message: "Login berhasil", data: { username }, status: "success" },
       { status: 200 }
     );
 
@@ -43,7 +43,6 @@ export async function POST(req) {
 
     return response;
   } catch (error) {
-    console.error("Login API error:", error);
-    return errorResponse("Gagal login. Silakan coba lagi.", 500, error.message);
+    return serverError(error, "Gagal masuk. Silakan coba lagi.");
   }
 }

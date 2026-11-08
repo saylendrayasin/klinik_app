@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Persalinan } from "@/models/persalinan";
-import { errorResponse } from "@/lib/response";
+import { errorResponse, serverError } from "@/lib/response";
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 
@@ -110,7 +110,7 @@ export async function GET(req) {
     }
 
     if (from > to) {
-      return errorResponse("Tanggal from tidak boleh lebih besar dari to", 400);
+      return errorResponse("Tanggal awal tidak boleh melebihi tanggal akhir", 400);
     }
 
     const workbook = new ExcelJS.Workbook();
@@ -323,11 +323,6 @@ export async function GET(req) {
       },
     });
   } catch (error) {
-    console.error("❌ Gagal ekspor data persalinan:", error);
-    return errorResponse(
-      "Gagal mengekspor data persalinan",
-      500,
-      error.message
-    );
+    return serverError(error, "Gagal mengekspor data persalinan");
   }
 }

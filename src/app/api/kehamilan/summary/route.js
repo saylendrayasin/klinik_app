@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/database";
 import { Kehamilan } from "@/models/kehamilan";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, errorResponse, serverError } from "@/lib/response";
+import { jadwalTerlewatQuery } from "@/lib/kehamilan";
 
 export async function GET() {
   try {
@@ -20,11 +21,11 @@ export async function GET() {
         }),
         Kehamilan.countDocuments({
           status: "aktif",
-          "visits.jadwalBerikutnya": { $exists: true, $lt: today },
+          ...jadwalTerlewatQuery(today),
         }),
       ]);
 
-    return successResponse("Summary kehamilan berhasil diambil", {
+    return successResponse("Ringkasan kehamilan berhasil diambil", {
       total,
       aktif,
       overdue,
@@ -32,7 +33,6 @@ export async function GET() {
       jadwalTerlewat: jadwalTerlewatResult,
     });
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil summary kehamilan", 500);
+    return serverError(error, "Gagal mengambil ringkasan kehamilan");
   }
 }

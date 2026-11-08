@@ -1,4 +1,4 @@
-import withPWAInit from "@ducanh2912/next-pwa";
+import withPWAInit, { runtimeCaching as cacheBawaan } from "@ducanh2912/next-pwa";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -7,70 +7,60 @@ const { version } = require("./package.json");
 const withPWA = withPWAInit({
   dest: "public",
   register: true,
-  skipWaiting: true,
-  clientsClaim: true,
   disable: process.env.NODE_ENV === "development",
-  runtimeCaching: [
-    {
-      urlPattern: /^\/api\/(patients|public|data).*\.json$/,
-      handler: "StaleWhileRevalidate",
-      method: "GET",
-      options: {
-        cacheName: "api-cache",
-        expiration: {
-          maxEntries: 20,
-          maxAgeSeconds: 24 * 60 * 60,
-        },
+  // next-pwa v10 hanya membaca runtimeCaching/skipWaiting/clientsClaim dari
+  // workboxOptions. Dulu ditaruh di tingkat atas sehingga diabaikan, dan aturan
+  // bawaan "apis" (NetworkFirst) diam-diam menyimpan respons /api — data pasien,
+  // TTD, cap — di cache perangkat selama sehari.
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+    runtimeCaching: [
+      // Data klinis & halaman cetak (TTD, cap tersisip) tidak pernah di-cache.
+      // Aturan pertama yang cocok yang dipakai, jadi ini harus paling atas.
+      {
+        urlPattern: ({ url, sameOrigin }) =>
+          sameOrigin && (url.pathname.startsWith("/api/") || url.pathname.startsWith("/print/")),
+        handler: "NetworkOnly",
+        method: "GET",
       },
-    },
-
-    {
-      urlPattern: /\.(?:js|css)$/i,
-      handler: "StaleWhileRevalidate",
-      options: {
-        cacheName: "static-resources",
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60,
-        },
-      },
-    },
-
-    {
-      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico|webp)$/i,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "images",
-        expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 7 * 24 * 60 * 60,
-        },
-      },
-    },
-
-    {
-      urlPattern: /^\/api\/.*$/,
-      handler: "NetworkOnly",
-      method: "POST",
-    },
-    {
-      urlPattern: /^\/api\/.*$/,
-      handler: "NetworkOnly",
-      method: "PATCH",
-    },
-    {
-      urlPattern: /^\/api\/.*$/,
-      handler: "NetworkOnly",
-      method: "DELETE",
-    },
-  ],
+      // Aset statis, font, ikon, dan cangkang halaman tetap dari aturan bawaan.
+      ...cacheBawaan.filter((r) => r.options?.cacheName !== "apis"),
+    ],
+  },
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Suite test memakai folder build sendiri (.next-test) lewat variabel ini.
+  // Tanpa pemisahan itu, menjalankan test sambil `npm run dev` akan menimpa
+  // .next milik dev server dan membuatnya rusak (ENOENT build-manifest).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
+  },
+  // Halaman cetak memuat data pasien, tanda tangan, dan cap: jangan pernah
+  // tersimpan di cache browser/proxy mana pun.
+  async headers() {
+    return [
+      {
+        source: "/print/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store" },
+          { key: "X-Robots-Tag", value: "noindex" },
+        ],
+      },
+    ];
+  },
+  // "Konfigurasi" & pengaturan consent lama pindah ke Master Data.
+  async redirects() {
+    return [
+      { source: "/dashboard/config", destination: "/dashboard/master", permanent: false },
+      { source: "/dashboard/config/new", destination: "/dashboard/master/diagnosis/new", permanent: false },
+      { source: "/dashboard/config/:id", destination: "/dashboard/master/diagnosis/:id", permanent: false },
+      { source: "/dashboard/consent/pengaturan", destination: "/dashboard/master?tab=kop", permanent: false },
+    ];
   },
 };
 

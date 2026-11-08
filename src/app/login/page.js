@@ -4,6 +4,9 @@ import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { FaSpinner, FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
+const inputCls =
+  "w-full pl-11 pr-4 h-12 bg-white border border-slate-300 rounded-xl text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-500 transition";
+
 export default function LoginPage() {
   const { signIn } = useAuth();
   const [form, setForm] = useState({ username: "", password: "" });
@@ -24,49 +27,62 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0b1120]">
-      {/* Background orbs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-48 -left-24 w-96 h-96 bg-blue-600/25 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-48 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-violet-700/10 rounded-full blur-3xl" />
-        {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "40px 40px" }}
-        />
-      </div>
+    <div className="min-h-dvh grid lg:grid-cols-2 bg-brand-50">
+      {/* Panel brand (desktop) */}
+      <div className="hidden lg:flex relative overflow-hidden flex-col justify-between p-12 bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 text-white">
+        <div aria-hidden="true" className="absolute -right-32 -top-32 w-[28rem] h-[28rem] rounded-full bg-white/[0.06]" />
+        <div aria-hidden="true" className="absolute -left-20 bottom-[-10rem] w-[24rem] h-[24rem] rounded-full bg-white/[0.04]" />
 
-      <div className="relative w-full max-w-sm">
-        {/* Logo floating above card */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-2xl shadow-blue-900/50 flex items-center justify-center mb-3">
-            <img src="/icons/icon-192x192.png" alt="Logo" className="w-10 h-10 object-contain" />
+        <div className="relative flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg">
+            <img src="/kop/logo-klinik.png" alt="" className="w-10 h-10 object-contain" />
           </div>
-          <h1 className="text-white text-2xl font-bold tracking-tight">Klinik Iya</h1>
-          <p className="text-slate-400 text-sm mt-1">Sistem Manajemen Klinik</p>
+          <span className="text-lg font-bold">Klinik Iya</span>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white/[0.06] backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.1] overflow-hidden"
-        >
-          {/* Top accent */}
-          <div className="h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
+        <div className="relative max-w-md">
+          <h2 className="text-4xl font-bold leading-tight">
+            Pelayanan ibu &amp; anak, tercatat rapi.
+          </h2>
+          <p className="mt-4 text-brand-100/80 text-base leading-relaxed">
+            Kelola data pasien, KB, kehamilan, persalinan, dan persetujuan tindakan dalam satu tempat.
+          </p>
+        </div>
 
-          <div className="p-7 space-y-5">
-            <div className="text-center mb-1">
-              <h2 className="text-white font-bold text-lg">Masuk ke Akun</h2>
-              <p className="text-slate-400 text-sm mt-0.5">Silakan login sebagai administrator</p>
+        <p className="relative text-brand-200/60 text-sm">
+          © {new Date().getFullYear()} Klinik Iya · Sistem Manajemen
+        </p>
+      </div>
+
+      {/* Form */}
+      <div className="flex items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center mb-6 lg:hidden">
+            <div className="w-20 h-20 rounded-3xl bg-white shadow-lg shadow-brand-900/10 ring-1 ring-brand-100 flex items-center justify-center mb-3">
+              <img src="/kop/logo-klinik.png" alt="Logo Klinik Iya" className="w-16 h-16 object-contain" />
+            </div>
+            <h1 className="text-brand-900 text-2xl font-bold tracking-tight">Klinik Iya</h1>
+            <p className="text-slate-500 text-sm mt-1">Sistem Manajemen Klinik</p>
+          </div>
+
+          {/* method="post": bila ditekan sebelum JS siap, sandi tidak ikut ke URL/riwayat/log */}
+          <form
+            method="post"
+            onSubmit={handleSubmit}
+            className="bg-white rounded-3xl shadow-xl shadow-brand-900/[0.07] ring-1 ring-slate-200/70 p-6 sm:p-8 space-y-5"
+          >
+            <div>
+              <h2 className="text-slate-900 font-bold text-xl">Masuk ke Akun</h2>
+              <p className="text-slate-500 text-sm mt-1">Silakan login sebagai administrator</p>
             </div>
 
-            {/* Username */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="username" className="text-sm font-semibold text-slate-300">
+              <label htmlFor="username" className="text-sm font-semibold text-slate-700">
                 Username
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                  <FaUser size={13} />
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400" aria-hidden="true">
+                  <FaUser size={14} />
                 </span>
                 <input
                   id="username"
@@ -76,19 +92,18 @@ export default function LoginPage() {
                   placeholder="Masukkan username"
                   autoComplete="username"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-white/[0.08] border border-white/[0.12] rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500/40 transition"
+                  className={inputCls}
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="password" className="text-sm font-semibold text-slate-300">
+              <label htmlFor="password" className="text-sm font-semibold text-slate-700">
                 Password
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                  <FaLock size={13} />
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400" aria-hidden="true">
+                  <FaLock size={14} />
                 </span>
                 <input
                   id="password"
@@ -99,49 +114,46 @@ export default function LoginPage() {
                   placeholder="Masukkan password"
                   autoComplete="current-password"
                   required
-                  className="w-full pl-10 pr-11 py-3 bg-white/[0.08] border border-white/[0.12] rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500/40 transition"
+                  className={`${inputCls} pr-12`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-500 hover:text-slate-300 transition"
+                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-0 w-12 flex items-center justify-center rounded-r-xl text-slate-400 hover:text-brand-700 transition"
                 >
-                  {showPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                  {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Remember me */}
-            <div className="flex items-center gap-2.5">
+            <label htmlFor="rememberMe" className="inline-flex items-center gap-3 min-h-11 select-none text-sm text-slate-600">
               <input
                 id="rememberMe"
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 accent-blue-500 rounded cursor-pointer"
+                className="w-5 h-5 accent-brand-600 rounded"
               />
-              <label htmlFor="rememberMe" className="text-slate-400 text-sm select-none cursor-pointer">
-                Ingat Saya
-              </label>
-            </div>
+              Ingat Saya
+            </label>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] text-white font-semibold py-3 rounded-xl transition-all duration-150 disabled:opacity-60 shadow-lg shadow-blue-900/40"
+              className="w-full h-12 flex justify-center items-center gap-2 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-semibold rounded-xl transition disabled:opacity-60 shadow-lg shadow-brand-600/25"
             >
               {loading ? (
                 <><FaSpinner className="animate-spin" size={14} /> Memproses...</>
               ) : "Masuk"}
             </button>
-          </div>
-          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
-        </form>
+          </form>
 
-        <p className="text-center text-slate-600 text-xs mt-5">
-          © {new Date().getFullYear()} Klinik Iya · Sistem Manajemen
-        </p>
+          <p className="text-center text-slate-400 text-xs mt-6 lg:hidden">
+            © {new Date().getFullYear()} Klinik Iya · Sistem Manajemen
+          </p>
+        </div>
       </div>
     </div>
   );

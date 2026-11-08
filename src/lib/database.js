@@ -20,6 +20,13 @@ export async function connectDB() {
     cached.promise = mongoose
       .connect(MONGODB_URI, {
         bufferCommands: false,
+        // Di serverless (Vercel) tiap instance punya pool sendiri dan bisa ada
+        // banyak instance sekaligus. Pool kecil mencegah kuota koneksi Atlas
+        // habis; batas waktu pendek membuat gangguan jaringan cepat ketahuan
+        // daripada menggantung sampai fungsi timeout.
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
       })
       .then((mongooseInstance) => {
         console.log("[MongoDB] ✅ Connection established");

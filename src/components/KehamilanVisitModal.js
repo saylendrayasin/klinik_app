@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FaSpinner } from "react-icons/fa";
-import { X } from "lucide-react";
+import Modal, { btnBatal, btnUtama, Spinner } from "@/components/Modal";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -44,7 +42,7 @@ const LETAK_OPTIONS = [
 
 const TRIMESTER_LABEL = { 1: "T1", 2: "T2", 3: "T3" };
 const TRIMESTER_COLOR = {
-  1: "bg-blue-100 text-blue-700",
+  1: "bg-brand-100 text-brand-700",
   2: "bg-green-100 text-green-700",
   3: "bg-orange-100 text-orange-700",
 };
@@ -74,13 +72,6 @@ export default function KehamilanVisitModal({
   const [form, setForm] = useState(empty);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e) => { if (e.key === "Escape" && !submitting) onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, submitting]);
 
   const uk = calcUK(hpht, form.date);
   const trimester = calcTrimester(uk);
@@ -140,236 +131,205 @@ export default function KehamilanVisitModal({
     setSubmitting(false);
   };
 
-  if (!open) return null;
-
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ duration: 0.18 }}
-            className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-bold text-gray-800">
-                {mode === "add" ? "Tambah Kunjungan ANC" : "Edit Kunjungan ANC"}
-              </h2>
-              <button
-                onClick={onClose}
-                disabled={submitting}
-                aria-label="Tutup"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+    <Modal
+      open={open}
+      onClose={onClose}
+      busy={submitting}
+      onSubmit={handleSubmit}
+      title={mode === "add" ? "Tambah Kunjungan ANC" : "Edit Kunjungan ANC"}
+      footer={
+        <>
+          <button type="button" onClick={onClose} disabled={submitting} className={btnBatal}>
+            Batal
+          </button>
+          <button type="submit" disabled={submitting} className={btnUtama}>
+            {submitting ? <><Spinner /> Menyimpan...</> : mode === "add" ? "Simpan Kunjungan" : "Simpan Perubahan"}
+          </button>
+        </>
+      }
+    >
+      {/* Tanggal + UK + Trimester */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-date" className="font-semibold text-slate-700 text-sm">
+          Tanggal Kunjungan <span className="text-red-500">*</span>
+        </label>
+        <input id="anc-date"
+          name="date"
+          type="date"
+          value={form.date}
+          onChange={handleChange}
+          max={todayStr()}
+          required
+          className="field"
+        />
+        {uk != null && (
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-slate-600">
+              Usia Kehamilan:{" "}
+              <span className="font-semibold text-brand-700">{uk} minggu</span>
+            </span>
+            {trimester && (
+              <span
+                className={`text-xs font-bold px-2 py-0.5 rounded-full ${TRIMESTER_COLOR[trimester]}`}
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+                {TRIMESTER_LABEL[trimester]}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              {/* Tanggal + UK + Trimester */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">
-                  Tanggal Kunjungan <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="date"
-                  type="date"
-                  value={form.date}
-                  onChange={handleChange}
-                  max={todayStr()}
-                  required
-                  className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                />
-                {uk != null && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-gray-600">
-                      Usia Kehamilan:{" "}
-                      <span className="font-semibold text-rose-700">{uk} minggu</span>
-                    </span>
-                    {trimester && (
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${TRIMESTER_COLOR[trimester]}`}
-                      >
-                        {TRIMESTER_LABEL[trimester]}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
+      {/* Jadwal Berikutnya */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-jadwalBerikutnya" className="font-semibold text-slate-700 text-sm">
+          Jadwal Kunjungan Berikutnya
+          <span className="text-xs text-slate-400 font-normal ml-1">(auto-suggest, bisa diubah)</span>
+        </label>
+        <input id="anc-jadwalBerikutnya"
+          name="jadwalBerikutnya"
+          type="date"
+          value={form.jadwalBerikutnya}
+          onChange={handleChange}
+          className="field"
+        />
+      </div>
 
-              {/* Jadwal Berikutnya */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">
-                  Jadwal Kunjungan Berikutnya
-                  <span className="text-xs text-gray-400 font-normal ml-1">(auto-suggest, bisa diubah)</span>
-                </label>
-                <input
-                  name="jadwalBerikutnya"
-                  type="date"
-                  value={form.jadwalBerikutnya}
-                  onChange={handleChange}
-                  className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                />
-              </div>
+      {/* BB */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-beratBadan" className="font-semibold text-slate-700 text-sm">Berat Badan (kg)</label>
+        <input id="anc-beratBadan"
+          name="beratBadan"
+          type="number"
+          step="0.1"
+          min="0"
+          value={form.beratBadan}
+          onChange={handleChange}
+          placeholder="52.5"
+          className="field"
+        />
+      </div>
 
-              {/* BB */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">Berat Badan (kg)</label>
-                <input
-                  name="beratBadan"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={form.beratBadan}
-                  onChange={handleChange}
-                  placeholder="52.5"
-                  className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                />
-              </div>
-
-              {/* TD */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">
-                  Tekanan Darah (mmHg)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    name="tekananDarahSistol"
-                    type="number"
-                    min="0"
-                    value={form.tekananDarahSistol}
-                    onChange={handleChange}
-                    placeholder="Sistol"
-                    className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                  />
-                  <span className="text-gray-500 font-bold">/</span>
-                  <input
-                    name="tekananDarahDiastol"
-                    type="number"
-                    min="0"
-                    value={form.tekananDarahDiastol}
-                    onChange={handleChange}
-                    placeholder="Diastol"
-                    className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                  />
-                </div>
-                {(Number(form.tekananDarahSistol) >= 140 ||
-                  Number(form.tekananDarahDiastol) >= 90) &&
-                  form.tekananDarahSistol !== "" && (
-                    <p className="text-xs text-red-600 font-medium mt-0.5">
-                      ⚠️ TD tinggi — perhatikan risiko preeklampsia
-                    </p>
-                  )}
-              </div>
-
-              {/* TFU + DJJ */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="font-semibold text-gray-700 text-sm">TFU (cm)</label>
-                  <input
-                    name="tfu"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={form.tfu}
-                    onChange={handleChange}
-                    placeholder="20"
-                    className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="font-semibold text-gray-700 text-sm">DJJ (bpm)</label>
-                  <input
-                    name="djj"
-                    type="number"
-                    min="0"
-                    value={form.djj}
-                    onChange={handleChange}
-                    placeholder="140"
-                    className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                  />
-                </div>
-              </div>
-
-              {/* Letak Janin */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">Letak Janin</label>
-                <select
-                  name="letakJanin"
-                  value={form.letakJanin}
-                  onChange={handleChange}
-                  className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-400"
-                >
-                  {LETAK_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Keluhan */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">Keluhan</label>
-                <textarea
-                  name="keluhan"
-                  rows={2}
-                  value={form.keluhan}
-                  onChange={handleChange}
-                  placeholder="Keluhan ibu saat kunjungan..."
-                  className="p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-rose-400"
-                />
-              </div>
-
-              {/* Tindakan */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">Tindakan / Obat</label>
-                <textarea
-                  name="tindakan"
-                  rows={2}
-                  value={form.tindakan}
-                  onChange={handleChange}
-                  placeholder="Tindakan atau obat yang diberikan..."
-                  className="p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-rose-400"
-                />
-              </div>
-
-              {/* Catatan */}
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold text-gray-700 text-sm">Catatan</label>
-                <textarea
-                  name="notes"
-                  rows={2}
-                  value={form.notes}
-                  onChange={handleChange}
-                  placeholder="Catatan tambahan..."
-                  className="p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-rose-400"
-                />
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 rounded-md transition disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
-              >
-                {submitting ? (
-                  <>
-                    <FaSpinner className="animate-spin" /> Menyimpan...
-                  </>
-                ) : mode === "add" ? (
-                  "Simpan Kunjungan"
-                ) : (
-                  "Simpan Perubahan"
-                )}
-              </button>
-            </form>
-          </motion.div>
+      {/* TD */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-tekananDarahSistol" className="font-semibold text-slate-700 text-sm">
+          Tekanan Darah (mmHg)
+        </label>
+        <div className="flex items-center gap-2">
+          <input id="anc-tekananDarahSistol"
+            name="tekananDarahSistol"
+            type="number"
+            min="0"
+            value={form.tekananDarahSistol}
+            onChange={handleChange}
+            placeholder="Sistol"
+            className="field flex-1"
+          />
+          <span className="text-slate-500 font-bold">/</span>
+          <input
+            aria-label="Tekanan darah diastol (mmHg)"
+            name="tekananDarahDiastol"
+            type="number"
+            min="0"
+            value={form.tekananDarahDiastol}
+            onChange={handleChange}
+            placeholder="Diastol"
+            className="field flex-1"
+          />
         </div>
-      )}
-    </AnimatePresence>
+        {(Number(form.tekananDarahSistol) >= 140 ||
+          Number(form.tekananDarahDiastol) >= 90) &&
+          form.tekananDarahSistol !== "" && (
+            <p className="text-xs text-red-600 font-medium mt-0.5">
+              ⚠️ TD tinggi — perhatikan risiko preeklampsia
+            </p>
+          )}
+      </div>
+
+      {/* TFU + DJJ */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="anc-tfu" className="font-semibold text-slate-700 text-sm">TFU (cm)</label>
+          <input id="anc-tfu"
+            name="tfu"
+            type="number"
+            step="0.1"
+            min="0"
+            value={form.tfu}
+            onChange={handleChange}
+            placeholder="20"
+            className="field"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="anc-djj" className="font-semibold text-slate-700 text-sm">DJJ (bpm)</label>
+          <input id="anc-djj"
+            name="djj"
+            type="number"
+            min="0"
+            value={form.djj}
+            onChange={handleChange}
+            placeholder="140"
+            className="field"
+          />
+        </div>
+      </div>
+
+      {/* Letak Janin */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-letakJanin" className="font-semibold text-slate-700 text-sm">Letak Janin</label>
+        <select id="anc-letakJanin"
+          name="letakJanin"
+          value={form.letakJanin}
+          onChange={handleChange}
+          className="field"
+        >
+          {LETAK_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Keluhan */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-keluhan" className="font-semibold text-slate-700 text-sm">Keluhan</label>
+        <textarea id="anc-keluhan"
+          name="keluhan"
+          rows={2}
+          value={form.keluhan}
+          onChange={handleChange}
+          placeholder="Keluhan ibu saat kunjungan..."
+          className="field resize-none"
+        />
+      </div>
+
+      {/* Tindakan */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-tindakan" className="font-semibold text-slate-700 text-sm">Tindakan / Obat</label>
+        <textarea id="anc-tindakan"
+          name="tindakan"
+          rows={2}
+          value={form.tindakan}
+          onChange={handleChange}
+          placeholder="Tindakan atau obat yang diberikan..."
+          className="field resize-none"
+        />
+      </div>
+
+      {/* Catatan */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="anc-notes" className="font-semibold text-slate-700 text-sm">Catatan</label>
+        <textarea id="anc-notes"
+          name="notes"
+          rows={2}
+          value={form.notes}
+          onChange={handleChange}
+          placeholder="Catatan tambahan..."
+          className="field resize-none"
+        />
+      </div>
+    </Modal>
   );
 }

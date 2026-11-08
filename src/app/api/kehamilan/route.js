@@ -1,8 +1,9 @@
 import { connectDB } from "@/lib/database";
 import { Kehamilan } from "@/models/kehamilan";
-import { successResponse, paginatedResponse, errorResponse } from "@/lib/response";
+import { successResponse, paginatedResponse, errorResponse, serverError } from "@/lib/response";
+import { escapeRegex, parsePagination, pilihField } from "@/lib/query";
+import { MS_PER_DAY, jadwalTerlewatQuery } from "@/lib/kehamilan";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const ALLOWED_SORT = ["name", "hpl", "createdAt"];
 
 function calcHPL(hpht) {
@@ -21,11 +22,10 @@ export async function GET(req) {
       const recent = await Kehamilan.findOne({ nik: nikExact })
         .sort({ createdAt: -1 })
         .lean();
-      return successResponse("Lookup NIK selesai", recent || null);
+      return successResponse("Pencarian NIK selesai", recent || null);
     }
 
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 5;
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 5 });
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const nik = searchParams.get("nik") || "";
@@ -33,7 +33,6 @@ export async function GET(req) {
     const sortField = ALLOWED_SORT.includes(rawSort) ? rawSort : "name";
 
     const filter = searchParams.get("filter") || ""; // hplDekat | overdue | jadwalTerlewat
-    const skip = (page - 1) * limit;
 
     const today = new Date();
     const twoWeeksLater = new Date(today.getTime() + 14 * MS_PER_DAY);
@@ -41,7 +40,7 @@ export async function GET(req) {
     const query = {};
 
     if (search) {
-      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escaped = escapeRegex(search);
       query.$or = [
         { name: { $regex: escaped, $options: "i" } },
         { nik: { $regex: escaped, $options: "i" } },
@@ -56,7 +55,7 @@ export async function GET(req) {
       query.hpl = { $lt: today };
     } else if (filter === "jadwalTerlewat") {
       query.status = "aktif";
-      query["visits.jadwalBerikutnya"] = { $exists: true, $lt: today };
+      Object.assign(query, jadwalTerlewatQuery(today));
     } else {
       if (status && ["aktif", "selesai", "keguguran", "rujuk"].includes(status)) {
         query.status = status;
@@ -82,8 +81,7 @@ export async function GET(req) {
 
     return paginatedResponse("Data kehamilan berhasil diambil", data, page, totalPages);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil data kehamilan", 500);
+    return serverError(error, "Gagal mengambil data kehamilan");
   }
 }
 
@@ -91,7 +89,12 @@ export async function POST(req) {
   try {
     await connectDB();
     const body = await req.json();
-    const { force, ...data } = body;
+    const force = body?.force === true;
+    // hpl dihitung di bawah; usiaKehamilan/trimester per kunjungan lewat PATCH addVisit.
+    const data = pilihField(body, [
+      "name", "nik", "dateOfBirth", "address", "phone", "bloodType",
+      "gravida", "para", "abortus", "hpht", "status",
+    ]);
 
     if (!data.hpht) {
       return errorResponse("HPHT wajib diisi", 400);
@@ -112,16 +115,10 @@ export async function POST(req) {
     const created = await Kehamilan.create(data);
     return successResponse("Data kehamilan berhasil ditambahkan", created, 201);
   } catch (error) {
-    console.error(error);
-
     if (error.code === 11000) {
-      return errorResponse(
-        "Data kehamilan dengan NIK dan HPHT yang sama sudah terdaftar",
-        409,
-        error.message
-      );
+      return errorResponse("Data kehamilan dengan NIK dan HPHT yang sama sudah terdaftar", 409);
     }
 
-    return errorResponse("Gagal menambahkan data kehamilan", 400, error.message);
+    return serverError(error, "Gagal menambahkan data kehamilan");
   }
 }

@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Persalinan } from "@/models/persalinan";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, errorResponse, serverError } from "@/lib/response";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -57,7 +57,7 @@ export async function GET() {
       if (missed) kunjunganTerlewat++;
     }
 
-    return successResponse("Summary persalinan berhasil diambil", {
+    return successResponse("Ringkasan persalinan berhasil diambil", {
       totalBulanIni,
       aktif,
       belumPersalinan,
@@ -65,7 +65,6 @@ export async function GET() {
       perluPerhatian,
     });
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil summary persalinan", 500);
+    return serverError(error, "Gagal mengambil ringkasan persalinan");
   }
 }

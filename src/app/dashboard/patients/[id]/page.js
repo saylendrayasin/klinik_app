@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import DetailHeader from "@/components/DetailHeader";
+import TabBar from "@/components/TabBar";
 import { fetcher } from "@/lib/fetcher";
 import VisitModal from "@/components/VisitModal";
 import { toast } from "react-hot-toast";
@@ -9,13 +11,15 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import {
   FaPlus,
-  FaArrowLeft,
-  FaEdit,
-  FaTrash,
   FaUserEdit,
   FaClipboardList,
 } from "react-icons/fa";
 import ConfirmModal from "@/components/ConfirmModal";
+import { SkeletonKartu } from "@/components/Skeleton";
+import KartuKunjungan from "@/components/KartuKunjungan";
+import KeadaanKosong, { TidakDitemukan } from "@/components/KeadaanKosong";
+import Field from "@/components/Field";
+import { FormEdit, BagianForm } from "@/components/HalamanForm";
 
 function fmtDate(d) {
   if (!d) return "-";
@@ -41,8 +45,8 @@ function calculateAge(dob) {
 function DataItem({ label, value, className = "" }) {
   return (
     <div className={className}>
-      <span className="text-xs text-gray-400 uppercase tracking-wide">{label}</span>
-      <p className="font-medium text-gray-800 line-clamp-2">{value || "-"}</p>
+      <span className="text-xs text-slate-400 uppercase tracking-wide">{label}</span>
+      <p className="font-medium text-slate-800 line-clamp-2">{value || "-"}</p>
     </div>
   );
 }
@@ -74,6 +78,7 @@ export default function DashboardPatientDetailPage() {
   const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
   const [deletingVisit, setDeletingVisit] = useState(false);
   const [backConfirmOpen, setBackConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const savedForm = useMemo(() => ({
     name: patient?.name || "",
@@ -123,11 +128,12 @@ export default function DashboardPatientDetailPage() {
     return [];
   };
 
-  const fetchPatient = async () => {
+  // `pertahankanForm`: setelah kunjungan berubah, isian Edit Data yang belum disimpan tidak boleh tertimpa.
+  const fetchPatient = async (pertahankanForm = false) => {
     try {
       const { data } = await fetcher(`/api/patients/${params.id}`);
       setPatient(data);
-      setForm({
+      if (!pertahankanForm) setForm({
         name: data.name || "",
         dateOfBirth: data.dateOfBirth
           ? new Date(data.dateOfBirth).toISOString().slice(0, 10)
@@ -156,17 +162,20 @@ export default function DashboardPatientDetailPage() {
 
   const handleUpdatePatient = async (e) => {
     e.preventDefault();
+    setSaving(true);
     const toastId = toast.loading("Menyimpan perubahan...");
     try {
       await fetcher(`/api/patients/${params.id}`, {
         method: "PATCH",
         body: JSON.stringify({ ...form, visits: patient.visits }),
       });
-      toast.success("Perubahan berhasil disimpan!", { id: toastId });
+      toast.success("Perubahan berhasil disimpan", { id: toastId });
       await fetchPatient();
     } catch (error) {
       console.error(error);
-      toast.error("Gagal menyimpan perubahan!", { id: toastId });
+      toast.error(error?.message || "Gagal menyimpan perubahan", { id: toastId });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -197,12 +206,12 @@ export default function DashboardPatientDetailPage() {
         method: "PATCH",
         body: JSON.stringify({ visits: updatedVisits }),
       });
-      await fetchPatient();
+      await fetchPatient(true);
       setModalOpen(false);
-      toast.success("Kunjungan berhasil disimpan!", { id: toastId });
+      toast.success("Kunjungan berhasil disimpan", { id: toastId });
     } catch (error) {
       console.error(error);
-      toast.error("Gagal menyimpan kunjungan!", { id: toastId });
+      toast.error("Gagal menyimpan kunjungan", { id: toastId });
     }
   };
 
@@ -218,11 +227,11 @@ export default function DashboardPatientDetailPage() {
         body: JSON.stringify({ visits: updatedVisits }),
       });
       setDeleteVisitTarget(null);
-      await fetchPatient();
-      toast.success("Kunjungan berhasil dihapus!", { id: toastId });
+      await fetchPatient(true);
+      toast.success("Kunjungan berhasil dihapus", { id: toastId });
     } catch (error) {
       console.error(error);
-      toast.error("Gagal menghapus kunjungan!", { id: toastId });
+      toast.error("Gagal menghapus kunjungan", { id: toastId });
     } finally {
       setDeletingVisit(false);
     }
@@ -230,183 +239,100 @@ export default function DashboardPatientDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Back */}
-      <div className="flex justify-start mb-4">
-        <button
-          onClick={() => isDirty ? setBackConfirmOpen(true) : router.push("/dashboard/patients")}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
-        >
-          <FaArrowLeft /> Kembali
-        </button>
-      </div>
+      <DetailHeader
+        onBack={() => isDirty ? setBackConfirmOpen(true) : router.push("/dashboard/patients")}
+        loading={loading}
+        title={patient?.name}
+        badge={patient && (
+          <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
+            patient.gender === "Male" ? "bg-brand-100 text-brand-700" : "bg-pink-100 text-pink-700"
+          }`}>
+            {patient.gender === "Male" ? "Laki-laki" : "Perempuan"}
+          </span>
+        )}
+        meta={patient ? [
+          <>Umur: <strong className="text-slate-700">{calculateAge(patient.dateOfBirth)} tahun</strong></>,
+          <>Kunjungan: <strong className="text-slate-700">{patient.visits?.length || 0}x</strong></>,
+        ] : []}
+      />
 
-      {/* Info header */}
-      {patient && !loading && (
-        <div className="bg-white border rounded-lg shadow-sm px-4 py-3 mb-4">
-          <div className="flex items-center gap-2 mb-1 min-w-0">
-            <h2 className="font-bold text-gray-800 text-base truncate flex-1 min-w-0">
-              {patient.name}
-            </h2>
-            <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
-              patient.gender === "Male"
-                ? "bg-blue-100 text-blue-700"
-                : "bg-pink-100 text-pink-700"
-            }`}>
-              {patient.gender === "Male" ? "Laki-laki" : "Perempuan"}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
-            <span>Umur: <strong className="text-gray-700">{calculateAge(patient.dateOfBirth)} tahun</strong></span>
-            <span>Kunjungan: <strong className="text-gray-700">{patient.visits?.length || 0}x</strong></span>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
-        {[
+      <TabBar
+        tabs={[
           { key: "data", label: "Edit Data", icon: <FaUserEdit /> },
           { key: "visits", label: "Kunjungan", icon: <FaClipboardList /> },
-        ].map(({ key, label, icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm whitespace-nowrap rounded-t-md transition-all ${
-              activeTab === key
-                ? "bg-blue-100 text-blue-700 border-b-2 border-blue-600"
-                : "text-gray-600 hover:text-blue-600"
-            }`}
-          >
-            {icon} {label}
-          </button>
-        ))}
-      </div>
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
       {/* Tab content */}
-      <div>
+      <div key={activeTab} className="anim-masuk">
         {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
-          </div>
+          <SkeletonKartu />
         ) : !patient ? (
-          <div className="text-center text-red-500">Data pasien tidak ditemukan.</div>
+          <TidakDitemukan kembaliKe="/dashboard/patients" judul="Data pasien tidak ditemukan" />
         ) : activeTab === "data" ? (
-          /* ── Edit Form ── */
-          <form onSubmit={handleUpdatePatient} className="bg-white rounded-lg shadow-sm border overflow-hidden">
-            <div className="bg-blue-50 border-b border-blue-100 px-5 py-4">
-              <h2 className="text-base font-bold text-blue-800">Edit Data Pasien</h2>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {/* Nama + Jenis Kelamin */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="name" className="text-sm font-semibold text-gray-700">
-                    Nama Pasien <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    value={form.name}
-                    onChange={handleInputChange}
-                    required
-                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="gender" className="text-sm font-semibold text-gray-700">
-                    Jenis Kelamin
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="gender"
-                      name="gender"
-                      value={form.gender}
-                      onChange={handleInputChange}
-                      className="appearance-none p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
-                    >
+          <div>
+            <FormEdit onSubmit={handleUpdatePatient} busy={saving} dirty={isDirty} onBatal={() => setForm(savedForm)}>
+              <BagianForm no={1} judul="Data Pasien">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Nama Pasien" required>
+                    <input id="name" name="name" value={form.name} onChange={handleInputChange} required className="field" />
+                  </Field>
+                  <Field label="Jenis Kelamin">
+                    <select id="gender" name="gender" value={form.gender} onChange={handleInputChange} className="field">
                       <option value="Male">Laki-laki</option>
                       <option value="Female">Perempuan</option>
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
-                        <path d="M7 7l3-3 3 3m0 6l-3 3-3-3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  </div>
+                  </Field>
                 </div>
-              </div>
 
-              {/* Tanggal Lahir + Alamat */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="dateOfBirth" className="text-sm font-semibold text-gray-700">
-                    Tanggal Lahir <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="dateOfBirth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={form.dateOfBirth}
-                    onChange={handleInputChange}
-                    max={new Date().toLocaleDateString("en-CA")}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field
+                    label="Tanggal Lahir"
                     required
-                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                  {form.dateOfBirth && (
-                    <span className="text-xs text-gray-500 mt-0.5">
-                      Usia: <strong className="text-gray-700">{calculateAge(form.dateOfBirth)}</strong> tahun
-                    </span>
-                  )}
+                    ket={form.dateOfBirth ? `Usia ${calculateAge(form.dateOfBirth)} tahun` : null}
+                  >
+                    <input
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={handleInputChange}
+                      max={new Date().toLocaleDateString("en-CA")}
+                      required
+                      className="field"
+                    />
+                  </Field>
+                  <Field label="Alamat">
+                    <input id="address" name="address" value={form.address} onChange={handleInputChange} className="field" />
+                  </Field>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="address" className="text-sm font-semibold text-gray-700">
-                    Alamat
-                  </label>
-                  <input
-                    id="address"
-                    name="address"
-                    value={form.address}
-                    onChange={handleInputChange}
-                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                </div>
-              </div>
+              </BagianForm>
 
-              {/* Diagnosis (readonly) */}
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-700">Diagnosis Pasien</label>
-                <div className="flex flex-wrap gap-1.5 p-2.5 border border-gray-200 rounded-md bg-gray-50 min-h-[42px] items-center">
+              <BagianForm no={2} judul="Diagnosis" ket="Terisi otomatis dari diagnosis setiap kunjungan">
+                <div className="flex flex-wrap gap-1.5 p-3 border border-slate-200 rounded-xl bg-slate-50 min-h-11 items-center">
                   {getPatientDiagnosisLabels().length > 0 ? (
                     getPatientDiagnosisLabels().map((d, i) => (
-                      <span key={i} className="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                      <span key={i} className="bg-brand-100 text-brand-700 text-xs font-semibold px-2.5 py-1 rounded-full">
                         {d}
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm">Belum ada diagnosis</span>
+                    <span className="text-slate-400 text-sm">Belum ada diagnosis</span>
                   )}
                 </div>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5">
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-md font-semibold transition"
-              >
-                Simpan Perubahan
-              </button>
-            </div>
-          </form>
+              </BagianForm>
+            </FormEdit>
+          </div>
         ) : (
           /* ── Visit Tab ── */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-lg font-semibold text-gray-800">Riwayat Kunjungan</h2>
+              <h2 className="text-base sm:text-lg font-bold text-slate-800">Riwayat Kunjungan</h2>
               <button
                 onClick={handleOpenAddVisit}
-                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 min-h-11 px-5 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white text-sm font-semibold rounded-xl w-full sm:w-auto shadow-md shadow-brand-600/20 transition"
               >
                 <FaPlus /> Tambah Kunjungan
               </button>
@@ -414,7 +340,10 @@ export default function DashboardPatientDetailPage() {
 
             <div className="space-y-3">
               {(patient.visits || []).length === 0 ? (
-                <p className="text-gray-500 text-sm">Belum ada kunjungan.</p>
+                <KeadaanKosong
+                  judul="Belum ada kunjungan"
+                  ket="Tambahkan kunjungan pertama untuk mencatat keluhan, diagnosis, dan obat pasien."
+                />
               ) : (
                 [...(patient.visits || [])]
                   .map((v, origIndex) => ({ ...v, origIndex }))
@@ -423,35 +352,13 @@ export default function DashboardPatientDetailPage() {
                   const seqNo = arr.length - displayPos;
                   const diagLabels = getDiagnosisLabels(visit);
                   return (
-                    <div
+                    <KartuKunjungan
                       key={visit.origIndex}
-                      className="bg-white border rounded-lg shadow-sm overflow-hidden"
+                      kode={`#${seqNo}`}
+                      tanggal={visit.date}
+                      onEdit={() => handleOpenEditVisit(visit, visit.origIndex)}
+                      onHapus={() => setDeleteVisitTarget(visit.origIndex)}
                     >
-                      {/* Card header */}
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-blue-50 border-b">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                            #{seqNo}
-                          </span>
-                          <span className="text-sm font-semibold text-gray-700">
-                            {fmtDate(visit.date)}
-                          </span>
-                        </div>
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => handleOpenEditVisit(visit, visit.origIndex)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
-                          >
-                            <FaEdit /> Edit
-                          </button>
-                          <button
-                            onClick={() => setDeleteVisitTarget(visit.origIndex)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </div>
 
                       {/* Card body */}
                       <div className="px-4 py-3 space-y-2 text-sm">
@@ -465,18 +372,18 @@ export default function DashboardPatientDetailPage() {
                         </div>
                         {visit.medication && (
                           <div>
-                            <span className="text-xs text-gray-400 uppercase tracking-wide">Obat</span>
-                            <p className="font-medium text-gray-800 mt-0.5 line-clamp-2 break-words">
+                            <span className="text-xs text-slate-400 uppercase tracking-wide">Obat</span>
+                            <p className="font-medium text-slate-800 mt-0.5 line-clamp-2 break-words">
                               {fmtMedication(visit.medication)}
                             </p>
                           </div>
                         )}
                         {diagLabels.length > 0 && (
                           <div>
-                            <span className="text-xs text-gray-400 uppercase tracking-wide">Diagnosis</span>
+                            <span className="text-xs text-slate-400 uppercase tracking-wide">Diagnosis</span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
                               {diagLabels.map((d, i) => (
-                                <span key={i} className="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                <span key={i} className="bg-brand-100 text-brand-700 text-xs font-semibold px-2 py-0.5 rounded-full">
                                   {d}
                                 </span>
                               ))}
@@ -484,7 +391,7 @@ export default function DashboardPatientDetailPage() {
                           </div>
                         )}
                       </div>
-                    </div>
+                    </KartuKunjungan>
                   );
                 })
               )}

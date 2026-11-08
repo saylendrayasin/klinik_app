@@ -1,8 +1,9 @@
 import { connectDB } from "@/lib/database";
 import { Patient } from "@/models/patient";
-import { successResponse, paginatedResponse, errorResponse } from "@/lib/response";
+import { successResponse, paginatedResponse, errorResponse, serverError } from "@/lib/response";
+import { escapeRegex, parsePagination, pilihField } from "@/lib/query";
 
-const ALLOWED_SORT_PATIENT = ["name", "gender", "createdAt"];
+const ALLOWED_SORT_PATIENT = ["name", "gender", "dateOfBirth", "createdAt"];
 
 export async function GET(req) {
   try {
@@ -10,38 +11,42 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
 
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 5;
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 5 });
     const search = searchParams.get("search") || "";
     const rawSort = searchParams.get("sort");
     const sortField = ALLOWED_SORT_PATIENT.includes(rawSort) ? rawSort : "name";
 
-    const skip = (page - 1) * limit;
+    const query = search
+      ? { name: { $regex: escapeRegex(search), $options: "i" } }
+      : {};
 
-    const query = search ? { name: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : {};
+    // Halaman list hanya butuh 4 kolom — jangan tarik seluruh array visits[].
+    const [patients, totalPatients] = await Promise.all([
+      Patient.find(query)
+        .select("name dateOfBirth gender")
+        .sort({ [sortField]: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Patient.countDocuments(query),
+    ]);
 
-    const patients = await Patient.find(query)
-      .sort({ [sortField]: 1 })
-      .skip(skip)
-      .limit(limit);
-
-    const totalPatients = await Patient.countDocuments(query);
     const totalPages = Math.max(1, Math.ceil(totalPatients / limit));
 
     return paginatedResponse("Data pasien berhasil diambil", patients, page, totalPages);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil data pasien", 500);
+    return serverError(error, "Gagal mengambil data pasien");
   }
 }
 
 export async function POST(req) {
   try {
     await connectDB();
-    const body = await req.json();
-    const newPatient = await Patient.create(body);
-    return successResponse("Patient created successfully", newPatient, 201);
+    // diagnosis/diagnosisIds diturunkan dari kunjungan; kunjungan ditambah lewat PATCH.
+    const data = pilihField(await req.json(), ["name", "dateOfBirth", "address", "gender"]);
+    const newPatient = await Patient.create(data);
+    return successResponse("Pasien berhasil ditambahkan", newPatient, 201);
   } catch (error) {
-    return errorResponse("Failed to create patient", 400, error.message);
+    return serverError(error, "Gagal menambahkan pasien");
   }
 }

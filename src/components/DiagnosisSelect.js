@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { fetcher } from "@/lib/fetcher";
 
-export default function DiagnosisSelect({ value = [], onChange }) {
+export default function DiagnosisSelect({ value = [], onChange, inputId }) {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +43,7 @@ export default function DiagnosisSelect({ value = [], onChange }) {
 
   return (
     <Select
+      inputId={inputId}
       options={options}
       isMulti
       isLoading={loading}

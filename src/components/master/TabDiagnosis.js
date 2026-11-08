@@ -5,10 +5,15 @@ import Link from "next/link";
 import { fetcher } from "@/lib/fetcher";
 import { toast } from "react-hot-toast";
 import { FaEdit, FaPlus } from "react-icons/fa";
-import { Settings2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, SlidersHorizontal } from "lucide-react";
+import {
+  Settings2,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
+import Paginasi from "@/components/Paginasi";
 
-export default function DashboardConfigPage() {
+export default function TabDiagnosis() {
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("label");
@@ -42,7 +47,7 @@ export default function DashboardConfigPage() {
       setTotalPages(tp);
       if (page > tp) setPage(Math.max(1, tp));
     } catch (error) {
-      toast.error("Gagal memuat data konfigurasi");
+      toast.error("Gagal memuat data diagnosis");
     } finally {
       setLoading(false);
     }
@@ -72,23 +77,14 @@ export default function DashboardConfigPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
-      {/* Header */}
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center shadow-md shadow-slate-300 shrink-0">
-            <Settings2 size={17} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-800 leading-tight">Konfigurasi</h1>
-            <p className="text-slate-500 text-xs mt-0.5">Master data diagnosis dan kode referensi sistem</p>
-          </div>
-        </div>
+        <p className="text-sm text-slate-500">Daftar diagnosis yang dipilih di form kunjungan.</p>
         <Link
-          href="/dashboard/config/new"
-          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition-all duration-150 shadow-md shadow-slate-300 hover:shadow-lg hover:-translate-y-px active:scale-95"
+          href="/dashboard/master/diagnosis/new"
+          className="inline-flex items-center justify-center gap-2 min-h-11 bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 rounded-xl text-sm transition shadow-md shadow-brand-600/20 active:scale-95"
         >
-          <FaPlus size={11} /> Tambah Config
+          <FaPlus size={11} aria-hidden="true" /> Tambah Diagnosis
         </Link>
       </div>
 
@@ -96,42 +92,40 @@ export default function DashboardConfigPage() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
+          <input aria-label="Cari label diagnosis"
             type="text"
             placeholder="Cari label diagnosis..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400/50 focus:border-slate-300 transition shadow-sm placeholder:text-slate-400"
+            className="field pl-10"
           />
         </div>
         <div className="relative sm:w-44">
           <SlidersHorizontal size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <select
+          <select aria-label="Saring tipe"
             value={type}
             onChange={(e) => { setType(e.target.value); setPage(1); }}
-            className="appearance-none w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400/50 transition shadow-sm text-slate-700"
+            className="field pl-9"
           >
             <option value="diagnosis">Diagnosis</option>
           </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"><svg className="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path d="M7 7l3-3 3 3m0 6l-3 3-3-3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
         </div>
         <div className="relative sm:w-44">
-          <select
+          <select aria-label="Urutkan daftar"
             value={sort}
             onChange={(e) => { setSort(e.target.value); setPage(1); }}
-            className="appearance-none w-full px-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400/50 transition shadow-sm text-slate-700"
+            className="field"
           >
             <option value="label">Label A–Z</option>
             <option value="code">Kode A–Z</option>
           </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"><svg className="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path d="M7 7l3-3 3 3m0 6l-3 3-3-3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
         </div>
-        <label className="flex items-center gap-2 text-slate-600 text-sm font-medium cursor-pointer select-none whitespace-nowrap">
+        <label className="flex items-center gap-2.5 min-h-11 text-slate-600 text-sm font-medium cursor-pointer select-none whitespace-nowrap">
           <input
             type="checkbox"
             checked={includeInactive}
             onChange={(e) => { setIncludeInactive(e.target.checked); setPage(1); }}
-            className="w-4 h-4 accent-slate-600 rounded"
+            className="w-5 h-5 accent-brand-600 rounded"
           />
           Tampilkan nonaktif
         </label>
@@ -141,17 +135,17 @@ export default function DashboardConfigPage() {
       <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-gradient-to-r from-slate-50 to-slate-50/50 border-b border-slate-200">
-              <th className="py-3.5 px-5 text-left text-[11px] font-bold text-slate-600 uppercase tracking-wider">Label</th>
-              <th className="py-3.5 px-5 text-left text-[11px] font-bold text-slate-600 uppercase tracking-wider">Kode</th>
-              <th className="py-3.5 px-5 text-left text-[11px] font-bold text-slate-600 uppercase tracking-wider">Status</th>
-              <th className="py-3.5 px-5 text-center text-[11px] font-bold text-slate-600 uppercase tracking-wider">Aksi</th>
+            <tr className="bg-gradient-to-r from-brand-50 to-brand-50/40 border-b border-brand-100">
+              <th className="py-3.5 px-5 text-left text-[11px] font-bold text-brand-700 uppercase tracking-wider">Label</th>
+              <th className="py-3.5 px-5 text-left text-[11px] font-bold text-brand-700 uppercase tracking-wider">Kode</th>
+              <th className="py-3.5 px-5 text-left text-[11px] font-bold text-brand-700 uppercase tracking-wider">Status</th>
+              <th className="py-3.5 px-5 text-center text-[11px] font-bold text-brand-700 uppercase tracking-wider">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 anim-stagger">
             {loading ? (
               Array.from({ length: 6 }).map((_, idx) => (
-                <tr key={idx} className="animate-pulse">
+                <tr key={idx}>
                   <td className="py-3.5 px-5"><div className="h-4 bg-slate-100 rounded-lg w-3/4 skeleton" /></td>
                   <td className="py-3.5 px-5"><div className="h-4 bg-slate-100 rounded-lg w-1/2 skeleton" /></td>
                   <td className="py-3.5 px-5"><div className="h-4 bg-slate-100 rounded-lg w-1/3 skeleton" /></td>
@@ -175,12 +169,12 @@ export default function DashboardConfigPage() {
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="flex justify-center gap-2">
-                      <Link href={`/dashboard/config/${item._id}`} className="inline-flex items-center gap-1.5 bg-slate-600 hover:bg-slate-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95">
+                      <Link href={`/dashboard/master/diagnosis/${item._id}`} className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 min-h-11 lg:min-h-9 rounded-lg text-xs font-semibold transition active:scale-95">
                         <FaEdit size={10} /> Edit
                       </Link>
                       <button
                         onClick={() => setToggleTarget(item)}
-                        className={`inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 min-w-[100px] ${
+                        className={`inline-flex items-center justify-center px-3.5 py-1.5 min-h-11 lg:min-h-9 rounded-lg text-xs font-semibold transition active:scale-95 min-w-[100px] ${
                           item.isActive
                             ? "bg-red-50 hover:bg-red-500 text-red-600 hover:text-white border border-red-200 hover:border-red-500"
                             : "bg-green-50 hover:bg-green-500 text-green-600 hover:text-white border border-green-200 hover:border-green-500"
@@ -198,10 +192,10 @@ export default function DashboardConfigPage() {
       </div>
 
       {/* Card Mobile */}
-      <div className="block sm:hidden space-y-3">
+      <div className="block sm:hidden space-y-3 anim-stagger">
         {loading ? (
           Array.from({ length: 3 }).map((_, idx) => (
-            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 animate-pulse shadow-sm">
+            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
               <div className="h-5 bg-slate-100 rounded-lg w-2/3 skeleton" />
               <div className="h-4 bg-slate-100 rounded-lg w-1/2 skeleton" />
               <div className="flex gap-2 mt-3">
@@ -218,7 +212,6 @@ export default function DashboardConfigPage() {
         ) : (
           items.map((item) => (
             <div key={item._id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-slate-500 to-slate-600" />
               <div className="p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-sm font-bold text-slate-800 flex-1 min-w-0">{item.label}</h2>
@@ -228,7 +221,7 @@ export default function DashboardConfigPage() {
                 </div>
                 <p className="text-xs text-slate-500">Kode: <span className="font-mono text-slate-700">{item.code}</span></p>
                 <div className="flex gap-2 pt-1">
-                  <Link href={`/dashboard/config/${item._id}`} className="flex-1 bg-slate-600 hover:bg-slate-700 text-white flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95">
+                  <Link href={`/dashboard/master/diagnosis/${item._id}`} className="flex-1 min-h-11 bg-brand-50 hover:bg-brand-100 text-brand-700 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition active:scale-[0.98]">
                     <FaEdit size={12} /> Edit
                   </Link>
                   <button
@@ -264,22 +257,9 @@ export default function DashboardConfigPage() {
 
       {/* Pagination */}
       {items.length > 0 && (
-        <div className="flex items-center justify-center gap-1.5 pt-2">
-          <PagBtn onClick={() => setPage(1)} disabled={page === 1 || loading}><ChevronsLeft className="w-4 h-4" /></PagBtn>
-          <PagBtn onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1 || loading}><ChevronLeft className="w-4 h-4" /></PagBtn>
-          <span className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm min-w-[64px] text-center">{page} / {totalPages}</span>
-          <PagBtn onClick={() => setPage((p) => Math.min(p + 1, totalPages))} disabled={page === totalPages || loading}><ChevronRight className="w-4 h-4" /></PagBtn>
-          <PagBtn onClick={() => setPage(totalPages)} disabled={page === totalPages || loading}><ChevronsRight className="w-4 h-4" /></PagBtn>
-        </div>
+        <Paginasi page={page} totalPages={totalPages} loading={loading} onChange={setPage} />
       )}
     </div>
   );
 }
 
-function PagBtn({ onClick, disabled, children }) {
-  return (
-    <button onClick={onClick} disabled={disabled} className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-35 disabled:cursor-not-allowed transition shadow-sm">
-      {children}
-    </button>
-  );
-}

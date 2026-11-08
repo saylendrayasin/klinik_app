@@ -1,10 +1,10 @@
-import { errorResponse } from "@/lib/response";
+import { serverError } from "@/lib/response";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const response = NextResponse.json(
-      { status: true, message: "Logout berhasil", data: null },
+      { message: "Logout berhasil", data: null, status: "success" },
       { status: 200 }
     );
 
@@ -18,7 +18,6 @@ export async function POST(req) {
 
     return response;
   } catch (error) {
-    console.error(error);
-    return errorResponse("Logout gagal", 500, error.message);
+    return serverError(error, "Gagal keluar. Silakan coba lagi.");
   }
 }

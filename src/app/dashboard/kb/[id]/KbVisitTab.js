@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
+import { fetcher } from "@/lib/fetcher";
+import { FaPlus } from "react-icons/fa";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import KbVisitModal from "@/components/KbVisitModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import KeadaanKosong from "@/components/KeadaanKosong";
+import KartuKunjungan from "@/components/KartuKunjungan";
 
 const fmtDate = (dateStr) => {
   if (!dateStr) return "-";
@@ -20,8 +23,8 @@ const fmtDate = (dateStr) => {
 function DataItem({ label, value, className = "" }) {
   return (
     <div className={className}>
-      <span className="text-xs text-gray-400 uppercase tracking-wide">{label}</span>
-      <p className="font-medium text-gray-800">{value || "-"}</p>
+      <span className="text-xs text-slate-400 uppercase tracking-wide">{label}</span>
+      <p className="font-medium text-slate-800">{value || "-"}</p>
     </div>
   );
 }
@@ -58,23 +61,17 @@ export default function KbVisitsTab({ kb, onRefresh }) {
         updatedVisits.push(formData);
       }
 
-      const res = await fetch(`/api/kb/${kb._id}`, {
+      await fetcher(`/api/kb/${kb._id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visits: updatedVisits }),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message || "Gagal menyimpan kunjungan!");
-      }
-
       await onRefresh();
       setModalOpen(false);
-      toast.success("Kunjungan berhasil disimpan!", { id: toastId });
+      toast.success("Kunjungan berhasil disimpan", { id: toastId });
     } catch (error) {
       console.error(error);
-      toast.error(error?.message || "Gagal menyimpan kunjungan!", { id: toastId });
+      toast.error(error?.message || "Gagal menyimpan kunjungan", { id: toastId });
     }
   };
 
@@ -86,23 +83,17 @@ export default function KbVisitsTab({ kb, onRefresh }) {
       const updatedVisits = [...(kb.visits || [])];
       updatedVisits.splice(deleteVisitTarget, 1);
 
-      const res = await fetch(`/api/kb/${kb._id}`, {
+      await fetcher(`/api/kb/${kb._id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visits: updatedVisits }),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message || "Gagal menghapus kunjungan!");
-      }
-
       setDeleteVisitTarget(null);
       await onRefresh();
-      toast.success("Kunjungan berhasil dihapus!", { id: toastId });
+      toast.success("Kunjungan berhasil dihapus", { id: toastId });
     } catch (error) {
       console.error(error);
-      toast.error(error?.message || "Gagal menghapus kunjungan!", { id: toastId });
+      toast.error(error?.message || "Gagal menghapus kunjungan", { id: toastId });
     } finally {
       setDeletingVisit(false);
     }
@@ -118,10 +109,10 @@ export default function KbVisitsTab({ kb, onRefresh }) {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-lg font-semibold text-gray-800">Riwayat Kunjungan KB</h2>
+        <h2 className="text-base sm:text-lg font-bold text-slate-800">Riwayat Kunjungan KB</h2>
         <button
           onClick={handleOpenAddVisit}
-          className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded-md w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 min-h-11 px-5 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white text-sm font-semibold rounded-xl w-full sm:w-auto shadow-md shadow-brand-600/20 transition"
         >
           <FaPlus /> Tambah Kunjungan
         </button>
@@ -130,56 +121,26 @@ export default function KbVisitsTab({ kb, onRefresh }) {
       {/* Visit list */}
       <div className="space-y-3">
         {displayVisits.length === 0 ? (
-          <p className="text-gray-500 text-sm">Belum ada kunjungan.</p>
+          <KeadaanKosong judul="Belum ada kunjungan KB" ket="Tambahkan kunjungan untuk mencatat metode KB dan tanggal kembali." />
         ) : (
           displayVisits.map((visit) => (
-            <div
+            <KartuKunjungan
               key={visit.origIndex}
-              className="bg-white border rounded-lg shadow-sm overflow-hidden"
+              kode={`#${visit.seqNo}`}
+              tanggal={visit.date}
+              meta={visit.metode ? <span className="font-semibold text-brand-700">{visit.metode}</span> : null}
+              onEdit={() => handleOpenEditVisit(visit, visit.origIndex)}
+              onHapus={() => setDeleteVisitTarget(visit.origIndex)}
             >
-              {/* Card header */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-purple-50 border-b">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    #{visit.seqNo}
-                  </span>
-                  <span className="text-sm font-semibold text-gray-700">
-                    {fmtDate(visit.date)}
-                  </span>
-                  {visit.metode && (
-                    <span className="text-xs font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                      {visit.metode}
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => handleOpenEditVisit(visit, visit.origIndex)}
-                    className="bg-purple-500 hover:bg-purple-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
-                  >
-                    <FaEdit /> Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleteVisitTarget(visit.origIndex)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded text-xs flex items-center gap-1"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
 
               {/* Card body */}
               <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                <DataItem label="Tanggal Datang" value={fmtDate(visit.date)} />
-                <DataItem label="Metode" value={visit.metode} />
-                {visit.returnDate && (
-                  <DataItem label="Tanggal Kembali" value={fmtDate(visit.returnDate)} />
-                )}
+                <DataItem label="Jadwal Kembali" value={visit.returnDate ? fmtDate(visit.returnDate) : "-"} />
                 {visit.notes && (
                   <DataItem label="Catatan" value={visit.notes} className="col-span-2 sm:col-span-3" />
                 )}
               </div>
-            </div>
+            </KartuKunjungan>
           ))
         )}
       </div>

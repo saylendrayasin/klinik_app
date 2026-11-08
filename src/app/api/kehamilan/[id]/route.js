@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Kehamilan } from "@/models/kehamilan";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, errorResponse, serverError } from "@/lib/response";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -26,7 +26,7 @@ export async function GET(req, context) {
     if (!doc) return errorResponse("Data kehamilan tidak ditemukan", 404);
     return successResponse("Berhasil mengambil data kehamilan", doc);
   } catch (error) {
-    return errorResponse("Gagal mengambil data kehamilan", 400, error.message);
+    return serverError(error, "Gagal mengambil data kehamilan");
   }
 }
 
@@ -45,6 +45,12 @@ export async function PATCH(req, context) {
       if (!visit.date) return errorResponse("Tanggal kunjungan wajib diisi", 400);
 
       const uk = calcUK(doc.hpht, visit.date);
+      if (uk < 0) {
+        return errorResponse(
+          "Tanggal kunjungan tidak boleh lebih awal dari HPHT",
+          400
+        );
+      }
       visit.usiaKehamilan = uk;
       visit.trimester = calcTrimester(uk);
 
@@ -57,6 +63,12 @@ export async function PATCH(req, context) {
       const visit = body.visit || {};
       if (visit.date) {
         const uk = calcUK(doc.hpht, visit.date);
+        if (uk < 0) {
+          return errorResponse(
+            "Tanggal kunjungan tidak boleh lebih awal dari HPHT",
+            400
+          );
+        }
         visit.usiaKehamilan = uk;
         visit.trimester = calcTrimester(uk);
       }
@@ -87,21 +99,16 @@ export async function PATCH(req, context) {
         doc.hpl = calcHPL(d.hpht);
       }
     } else {
-      return errorResponse("Action tidak valid", 400);
+      return errorResponse("Aksi tidak dikenali", 400);
     }
 
     await doc.save();
-    return successResponse("Berhasil update data kehamilan", doc);
+    return successResponse("Data kehamilan berhasil diperbarui", doc);
   } catch (error) {
-    console.error(error);
     if (error.code === 11000) {
-      return errorResponse(
-        "Data kehamilan dengan NIK dan HPHT yang sama sudah terdaftar",
-        409,
-        error.message
-      );
+      return errorResponse("Data kehamilan dengan NIK dan HPHT yang sama sudah terdaftar", 409);
     }
-    return errorResponse("Gagal update data kehamilan", 400, error.message);
+    return serverError(error, "Gagal memperbarui data kehamilan");
   }
 }
 
@@ -113,7 +120,6 @@ export async function DELETE(req, context) {
     if (!deleted) return errorResponse("Data kehamilan tidak ditemukan", 404);
     return successResponse("Berhasil menghapus data kehamilan", deleted);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal menghapus data kehamilan", 400, error.message);
+    return serverError(error, "Gagal menghapus data kehamilan");
   }
 }

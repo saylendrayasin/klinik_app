@@ -2,123 +2,65 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { FaUsers, FaHeartbeat, FaBaby, FaChevronRight, FaHospital } from "react-icons/fa";
-import { Settings2, AlertTriangle, Clock, CalendarX } from "lucide-react";
+import { FaUsers, FaHeartbeat, FaBaby, FaChevronRight, FaHospital, FaFileSignature, FaFileMedical } from "react-icons/fa";
+import { Database, AlertTriangle, Clock, CalendarX } from "lucide-react";
 import { fetcher } from "@/lib/fetcher";
 
 const modules = [
-  {
-    href: "/dashboard/patients",
-    icon: FaUsers,
-    label: "Pasien",
-    description: "Kelola data pasien dan riwayat kunjungan pemeriksaan",
-    iconBg: "bg-gradient-to-br from-blue-500 to-blue-700",
-    cardBg: "bg-white hover:bg-blue-50/60",
-    border: "border-slate-200 hover:border-blue-200",
-    text: "text-blue-700",
-    chevron: "text-blue-300 group-hover:text-blue-500",
-  },
-  {
-    href: "/dashboard/kb",
-    icon: FaHeartbeat,
-    label: "KB",
-    description: "Data keluarga berencana dan kunjungan akseptor KB",
-    iconBg: "bg-gradient-to-br from-violet-500 to-violet-700",
-    cardBg: "bg-white hover:bg-violet-50/60",
-    border: "border-slate-200 hover:border-violet-200",
-    text: "text-violet-700",
-    chevron: "text-violet-300 group-hover:text-violet-500",
-  },
-  {
-    href: "/dashboard/kehamilan",
-    icon: FaBaby,
-    label: "Kehamilan",
-    description: "Monitoring ANC, jadwal kunjungan, dan HPL ibu hamil",
-    iconBg: "bg-gradient-to-br from-pink-500 to-rose-600",
-    cardBg: "bg-white hover:bg-pink-50/60",
-    border: "border-slate-200 hover:border-pink-200",
-    text: "text-pink-700",
-    chevron: "text-pink-300 group-hover:text-pink-500",
-  },
-  {
-    href: "/dashboard/persalinan",
-    icon: FaHospital,
-    label: "Persalinan",
-    description: "Pencatatan persalinan dan kunjungan nifas ibu",
-    iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600",
-    cardBg: "bg-white hover:bg-emerald-50/60",
-    border: "border-slate-200 hover:border-emerald-200",
-    text: "text-emerald-700",
-    chevron: "text-emerald-300 group-hover:text-emerald-500",
-  },
-  {
-    href: "/dashboard/config",
-    icon: Settings2,
-    label: "Konfigurasi",
-    description: "Master data diagnosis dan kode referensi sistem",
-    iconBg: "bg-gradient-to-br from-slate-500 to-slate-700",
-    cardBg: "bg-white hover:bg-slate-50/60",
-    border: "border-slate-200 hover:border-slate-300",
-    text: "text-slate-700",
-    chevron: "text-slate-300 group-hover:text-slate-500",
-  },
+  { href: "/dashboard/patients", icon: FaUsers, label: "Pasien", description: "Kelola data pasien dan riwayat kunjungan pemeriksaan" },
+  { href: "/dashboard/kb", icon: FaHeartbeat, label: "KB", description: "Data keluarga berencana dan kunjungan akseptor KB" },
+  { href: "/dashboard/kehamilan", icon: FaBaby, label: "Kehamilan", description: "Monitoring ANC, jadwal kunjungan, dan HPL ibu hamil" },
+  { href: "/dashboard/persalinan", icon: FaHospital, label: "Persalinan", description: "Pencatatan persalinan dan kunjungan nifas ibu" },
+  { href: "/dashboard/consent", icon: FaFileSignature, label: "Persetujuan Tindakan", description: "Informed consent bernomor, tanda tangan, dan cetak" },
+  { href: "/dashboard/surat-sakit", icon: FaFileMedical, label: "Surat Keterangan Sakit", description: "Surat istirahat bernomor siap cetak" },
+  { href: "/dashboard/master", icon: Database, label: "Master Data", description: "Diagnosis, penanda tangan, kop & cap, penomoran" },
 ];
 
 const statCards = [
-  {
-    key: "pasien",
-    icon: FaUsers,
-    label: "Total Pasien",
-    from: "from-blue-500",
-    to: "to-blue-600",
-    ring: "ring-blue-200",
-    href: "/dashboard/patients",
-  },
-  {
-    key: "kb",
-    icon: FaHeartbeat,
-    label: "Akseptor KB",
-    from: "from-violet-500",
-    to: "to-violet-600",
-    ring: "ring-violet-200",
-    href: "/dashboard/kb",
-  },
-  {
-    key: "kehamilanAktif",
-    icon: FaBaby,
-    label: "Ibu Hamil Aktif",
-    from: "from-pink-500",
-    to: "to-rose-500",
-    ring: "ring-pink-200",
-    href: "/dashboard/kehamilan",
-  },
-  {
-    key: "persalinanAktif",
-    icon: FaHospital,
-    label: "Ibu Nifas",
-    from: "from-emerald-500",
-    to: "to-teal-500",
-    ring: "ring-emerald-200",
-    href: "/dashboard/persalinan",
-  },
+  { key: "pasien", icon: FaUsers, label: "Total Pasien", href: "/dashboard/patients" },
+  { key: "kb", icon: FaHeartbeat, label: "Akseptor KB", href: "/dashboard/kb" },
+  { key: "kehamilanAktif", icon: FaBaby, label: "Ibu Hamil Aktif", href: "/dashboard/kehamilan" },
+  { key: "persalinanAktif", icon: FaHospital, label: "Ibu Nifas", href: "/dashboard/persalinan" },
 ];
 
-function StatCard({ icon: Icon, label, value, from, to, ring, href }) {
+// Angka naik dari 0 saat data tiba; langsung tampil bila pengguna memilih gerak dikurangi.
+function AngkaNaik({ nilai }) {
+  const [tampil, setTampil] = useState(0);
+  useEffect(() => {
+    if (!(nilai > 0) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTampil(nilai);
+      return;
+    }
+    let raf;
+    const mulai = performance.now();
+    const langkah = (t) => {
+      const p = Math.min(1, (t - mulai) / 650);
+      setTampil(Math.round(nilai * (1 - (1 - p) ** 3)));
+      if (p < 1) raf = requestAnimationFrame(langkah);
+    };
+    raf = requestAnimationFrame(langkah);
+    return () => cancelAnimationFrame(raf);
+  }, [nilai]);
+  return tampil;
+}
+
+function StatCard({ icon: Icon, label, value, href }) {
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col items-center justify-center gap-1.5 py-4 px-2 rounded-2xl bg-white border border-slate-200 text-center transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:ring-2 ${ring} overflow-hidden`}
+      className="group flex flex-col items-start gap-3 p-4 rounded-2xl bg-white border border-slate-200 transition hover:border-brand-200 hover:shadow-md hover:shadow-brand-900/5 hover:-translate-y-0.5 active:scale-[0.98]"
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${from} ${to} opacity-0 group-hover:opacity-5 transition-opacity`} />
-      <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${from} ${to} flex items-center justify-center shadow-md mb-0.5`}>
-        <Icon size={14} className="text-white" />
+      <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+        <Icon size={18} aria-hidden="true" />
       </div>
-      {value !== null ? (
-        <p className="text-2xl font-bold leading-none text-slate-800 font-mono">{value}</p>
-      ) : (
-        <div className="h-7 w-10 rounded-lg bg-slate-100 animate-pulse" />
-      )}
-      <p className="text-xs font-medium text-slate-500 leading-tight">{label}</p>
+      <div className="min-w-0">
+        {value !== null ? (
+          <p className="text-2xl font-bold leading-none text-slate-900 tabular-nums"><AngkaNaik nilai={value} /></p>
+        ) : (
+          <div className="h-6 w-10 rounded-lg skeleton" aria-hidden="true" />
+        )}
+        <p className="text-sm text-slate-500 mt-1 leading-tight">{label}</p>
+      </div>
     </Link>
   );
 }
@@ -132,7 +74,7 @@ const alertItems = [
     bg: "bg-amber-50",
     border: "border-amber-200",
     text: "text-amber-800",
-    iconColor: "text-amber-500",
+    iconColor: "text-amber-600",
   },
   {
     key: "hplOverdue",
@@ -152,7 +94,7 @@ const alertItems = [
     bg: "bg-orange-50",
     border: "border-orange-200",
     text: "text-orange-800",
-    iconColor: "text-orange-500",
+    iconColor: "text-orange-600",
   },
 ];
 
@@ -202,59 +144,46 @@ export default function DashboardHomePage() {
   const activeAlerts = alertItems.filter((a) => (stats.alerts?.[a.key] ?? 0) > 0);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
-      {/* Welcome banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f172a] via-[#1e2d4a] to-[#0f172a] shadow-xl">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-16 -right-16 w-56 h-56 bg-blue-600/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-16 -left-8 w-48 h-48 bg-indigo-600/15 rounded-full blur-3xl" />
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "24px 24px" }}
-          />
-        </div>
-        <div className="relative px-5 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold text-blue-400/80 uppercase tracking-widest bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/20">
-                {dateText}
-              </span>
-            </div>
-            <h1 className="text-white text-xl font-bold mt-2">
-              {greeting} 👋
-            </h1>
-            <p className="text-slate-400 text-sm mt-0.5">Sistem Manajemen Klinik Iya</p>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Banner sapaan */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 shadow-lg shadow-brand-900/15">
+        <div aria-hidden="true" className="absolute -top-20 -right-16 w-64 h-64 rounded-full bg-white/[0.06]" />
+        <div aria-hidden="true" className="absolute -bottom-24 right-32 w-48 h-48 rounded-full bg-white/[0.04]" />
+        {/* Logo klinik sebagai tanda air: ciri khas tanpa mengganggu teks */}
+        <img
+          src="/kop/logo-klinik.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute -right-4 -bottom-6 w-36 sm:w-48 lg:right-48 object-contain opacity-[0.09] brightness-0 invert pointer-events-none select-none"
+        />
+        <div className="relative px-5 py-5 sm:py-6 sm:px-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-brand-100/80 uppercase tracking-wider min-h-4">{dateText}</p>
+            <h1 className="text-white text-2xl font-bold mt-1.5">{greeting || "Selamat Datang"}</h1>
+            <p className="text-brand-100/80 text-sm mt-1">Sistem Manajemen Klinik Iya</p>
           </div>
-          <div className="shrink-0 bg-white/[0.06] border border-white/[0.1] rounded-2xl px-5 py-3.5 text-right backdrop-blur-sm">
-            <p className="text-slate-500 text-xs font-medium mb-0.5">Waktu Sekarang</p>
-            <p className="text-white text-2xl font-bold tracking-tight font-mono">{timeText}</p>
+          <div className="shrink-0 self-start sm:self-auto inline-flex sm:block items-center gap-2 bg-white/10 ring-1 ring-white/15 rounded-full sm:rounded-2xl px-3.5 py-1.5 sm:px-5 sm:py-3 sm:text-right">
+            <p className="hidden sm:block text-brand-100/80 text-xs font-medium">Waktu Sekarang</p>
+            <Clock size={14} className="sm:hidden text-brand-100" aria-hidden="true" />
+            <p className="text-white text-base sm:text-2xl font-bold tracking-tight tabular-nums">{timeText}</p>
           </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div>
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 px-0.5">Ringkasan Data</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Ringkasan */}
+      <section aria-labelledby="judul-ringkasan">
+        <h2 id="judul-ringkasan" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Ringkasan Data</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 anim-stagger">
           {statCards.map((s) => (
-            <StatCard
-              key={s.key}
-              icon={s.icon}
-              label={s.label}
-              value={stats[s.key]}
-              from={s.from}
-              to={s.to}
-              ring={s.ring}
-              href={s.href}
-            />
+            <StatCard key={s.key} icon={s.icon} label={s.label} value={stats[s.key]} href={s.href} />
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Alerts */}
+      {/* Peringatan */}
       {activeAlerts.length > 0 && (
-        <div>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 px-0.5">Perlu Perhatian</p>
+        <section aria-labelledby="judul-perhatian">
+          <h2 id="judul-perhatian" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Perlu Perhatian</h2>
           <div className="flex flex-col gap-2">
             {activeAlerts.map((a) => {
               const AlertIcon = a.icon;
@@ -263,43 +192,43 @@ export default function DashboardHomePage() {
                 <Link
                   key={a.key}
                   href={a.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${a.bg} ${a.border} transition-all duration-150 hover:shadow-sm hover:-translate-y-px`}
+                  className={`flex items-center gap-3 px-4 min-h-12 py-3 rounded-2xl border ${a.bg} ${a.border} transition hover:shadow-sm`}
                 >
-                  <AlertIcon size={15} className={`shrink-0 ${a.iconColor}`} />
-                  <p className={`text-xs font-semibold flex-1 ${a.text}`}>{a.label(count)}</p>
-                  <FaChevronRight size={9} className={`shrink-0 ${a.iconColor} opacity-60`} />
+                  <AlertIcon size={18} className={`shrink-0 ${a.iconColor}`} aria-hidden="true" />
+                  <p className={`text-sm font-semibold flex-1 ${a.text}`}>{a.label(count)}</p>
+                  <FaChevronRight size={11} className={`shrink-0 ${a.iconColor} opacity-70`} aria-hidden="true" />
                 </Link>
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Module grid */}
-      <div>
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 px-0.5">Modul Aktif</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      {/* Modul */}
+      <section aria-labelledby="judul-modul">
+        <h2 id="judul-modul" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Modul</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 anim-stagger">
           {modules.map((m) => {
             const Icon = m.icon;
             return (
               <Link
                 key={m.href}
                 href={m.href}
-                className={`group flex items-center gap-3.5 p-4 rounded-2xl border transition-all duration-200 ${m.cardBg} ${m.border} hover:shadow-md hover:-translate-y-px`}
+                className="group flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200 transition hover:border-brand-200 hover:shadow-md hover:shadow-brand-900/5"
               >
-                <div className={`${m.iconBg} text-white w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-md`}>
-                  <Icon size={19} />
+                <div className="w-12 h-12 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-brand-600/30">
+                  <Icon size={20} aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={`font-bold text-sm ${m.text}`}>{m.label}</p>
-                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed line-clamp-1">{m.description}</p>
+                  <p className="font-bold text-[15px] text-slate-900">{m.label}</p>
+                  <p className="text-sm text-slate-500 mt-0.5 leading-snug">{m.description}</p>
                 </div>
-                <FaChevronRight className={`shrink-0 text-[10px] transition-all duration-150 group-hover:translate-x-0.5 ${m.chevron}`} />
+                <FaChevronRight size={12} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" aria-hidden="true" />
               </Link>
             );
           })}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

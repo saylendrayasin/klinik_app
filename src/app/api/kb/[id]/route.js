@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Kb } from "@/models/kb";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, errorResponse, serverError } from "@/lib/response";
 
 export async function GET(req, context) {
   const params = await context.params;
@@ -12,7 +12,7 @@ export async function GET(req, context) {
 
     return successResponse("Berhasil mengambil data KB", kb);
   } catch (error) {
-    return errorResponse("Gagal mengambil data KB", 400, error.message);
+    return serverError(error, "Gagal mengambil data KB");
   }
 }
 
@@ -42,20 +42,17 @@ export async function PATCH(req, context) {
 
     await kb.save();
 
-    return successResponse("Berhasil update data KB", kb);
+    return successResponse("Data KB berhasil diperbarui", kb);
   } catch (error) {
-    console.error(error);
-
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
       return errorResponse(
         `${field} sudah terdaftar, silakan gunakan nilai lain`,
-        409,
-        error.message
+        409
       );
     }
 
-    return errorResponse("Gagal update data KB", 400, error.message);
+    return serverError(error, "Gagal memperbarui data KB");
   }
 }
 
@@ -71,7 +68,6 @@ export async function DELETE(req, context) {
 
     return successResponse("Berhasil menghapus data KB", deletedKb);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal menghapus data KB", 400, error.message);
+    return serverError(error, "Gagal menghapus data KB");
   }
 }

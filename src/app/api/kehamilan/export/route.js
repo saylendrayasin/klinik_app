@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Kehamilan } from "@/models/kehamilan";
-import { errorResponse } from "@/lib/response";
+import { errorResponse, serverError } from "@/lib/response";
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 
@@ -56,7 +56,7 @@ export async function GET(req) {
     const mode = (searchParams.get("mode") || "visits").toLowerCase();
 
     if (!["aktif", "visits"].includes(mode)) {
-      return errorResponse("mode tidak valid. Gunakan mode=aktif atau mode=visits", 400);
+      return errorResponse("Mode export tidak dikenali", 400);
     }
 
     const workbook = new ExcelJS.Workbook();
@@ -157,7 +157,7 @@ export async function GET(req) {
     }
 
     if (from > to) {
-      return errorResponse("Tanggal from tidak boleh lebih besar dari to", 400);
+      return errorResponse("Tanggal awal tidak boleh melebihi tanggal akhir", 400);
     }
 
     const data = await Kehamilan.find({
@@ -292,7 +292,6 @@ export async function GET(req) {
       },
     });
   } catch (error) {
-    console.error("❌ Gagal ekspor data kehamilan:", error);
-    return errorResponse("Gagal mengekspor data kehamilan", 500, error.message);
+    return serverError(error, "Gagal mengekspor data kehamilan");
   }
 }

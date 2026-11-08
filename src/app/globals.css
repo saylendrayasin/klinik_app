@@ -1,35 +1,153 @@
 @import "tailwindcss";
 
+/* Palet brand diturunkan dari warna logo Klinik Iya (#0C42A2 = brand-700).
+   Pakai `brand-*` untuk semua elemen inti (tombol utama, menu aktif, tab,
+   tautan, fokus). Hijau/kuning/merah hanya untuk makna status. */
+@theme {
+  --color-brand-50: #eff5ff;
+  --color-brand-100: #dbe7fe;
+  --color-brand-200: #bfd4fe;
+  --color-brand-300: #93b6fd;
+  --color-brand-400: #6090f8;
+  --color-brand-500: #3a6bef;
+  --color-brand-600: #1f50d6;
+  --color-brand-700: #0c42a2;
+  --color-brand-800: #0e3784;
+  --color-brand-900: #102f68;
+  --color-brand-950: #0a1c40;
+}
+
 :root {
-  --background: #f8fafc;
+  --background: #f6f8fc;
   --foreground: #0f172a;
-  --sidebar-bg: #0f172a;
-  --sidebar-border: rgba(255,255,255,0.07);
-  --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
-  --card-shadow-hover: 0 4px 16px 0 rgb(0 0 0 / 0.10);
 }
 
-@keyframes skeletonPulse {
-  0%, 100% { background-color: #e2e8f0; }
-  50% { background-color: #cbd5e1; }
+@layer base {
+  /* Tailwind v4 mengganti warna border bawaan menjadi currentColor (hitam).
+     Kelas `border` tanpa warna di aplikasi ini ditulis untuk v3 (abu-abu). */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-slate-200, currentColor);
+  }
+
+  /* v4 juga menghapus cursor:pointer bawaan pada tombol. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  select {
+    cursor: pointer;
+  }
+
+  /* Fokus keyboard harus terlihat jelas. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
+/* Satu gaya untuk semua input/select/textarea: `className="field"`.
+   Kelas utilitas (flex-1, pl-10, resize-none, …) tetap menang karena
+   layer utilities dimuat setelah components. */
+@layer components {
+  .field {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.875rem;
+    /* 16px di HP agar Safari iOS tidak memperbesar halaman saat fokus */
+    font-size: 1rem;
+    line-height: 1.375rem;
+    color: var(--color-slate-800);
+    background-color: #fff;
+    border: 1px solid var(--color-slate-300);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+  }
+  @media (min-width: 40rem) {
+    .field { font-size: 0.875rem; line-height: 1.25rem; }
+  }
+  .field::placeholder { color: var(--color-slate-400); }
+  .field:hover:not(:disabled):not([readonly]) { border-color: var(--color-slate-400); }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 3px var(--color-brand-100);
+  }
+  .field:disabled,
+  .field[readonly] {
+    background-color: var(--color-slate-50);
+    color: var(--color-slate-500);
+    cursor: not-allowed;
+  }
+  select.field {
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.1rem;
+  }
+  textarea.field { min-height: 5rem; resize: vertical; }
+}
+
+/* Animasi masuk halaman & daftar. Fill `backwards` (bukan `both`) agar tidak
+   ada transform yang tertinggal: transform pada leluhur akan membuat modal
+   `position: fixed` ikut tergeser. */
+@keyframes masuk {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.anim-masuk { animation: masuk 0.28s cubic-bezier(0.32, 0.72, 0, 1) backwards; }
+.anim-stagger > * { animation: masuk 0.3s cubic-bezier(0.32, 0.72, 0, 1) backwards; }
+.anim-stagger > :nth-child(2) { animation-delay: 35ms; }
+.anim-stagger > :nth-child(3) { animation-delay: 70ms; }
+.anim-stagger > :nth-child(4) { animation-delay: 105ms; }
+.anim-stagger > :nth-child(5) { animation-delay: 140ms; }
+.anim-stagger > :nth-child(6) { animation-delay: 175ms; }
+.anim-stagger > :nth-child(n + 7) { animation-delay: 210ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Kerangka muat: kilau yang bergeser, bukan kedip — terasa "sedang memuat",
+   bukan "rusak". Dimatikan otomatis oleh aturan reduced-motion di atas. */
+@keyframes kilau {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
 .skeleton {
-  animation: skeletonPulse 1.4s infinite ease-in-out;
+  background: linear-gradient(90deg, var(--color-slate-100) 30%, var(--color-slate-200) 50%, var(--color-slate-100) 70%);
+  background-size: 300% 100%;
+  animation: kilau 1.5s ease-in-out infinite;
 }
+
+/* Nomor bagian form (1, 2, 3, …) dari CSS counter. */
+.daftar-bagian { counter-reset: bagian; }
+.nomor-bagian { counter-increment: bagian; }
+.nomor-bagian::before { content: counter(bagian); }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* calendar.css */
-.react-calendar__tile {
-  font-size: 0.92rem;
-  padding: 0.6em 0.3em;
-}
-
+/* ---- Kalender (react-calendar) ---- */
 .react-calendar {
   width: 100% !important;
   max-width: 100% !important;
@@ -40,8 +158,69 @@
   background: transparent !important;
 }
 
-.react-calendar__navigation button {
+.react-calendar .react-calendar__navigation {
+  margin-bottom: 0.5rem;
+}
+
+.react-calendar .react-calendar__navigation button {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 0.75rem;
   font-weight: 600;
+  color: var(--color-slate-700);
+}
+
+.react-calendar .react-calendar__navigation button:enabled:hover,
+.react-calendar .react-calendar__navigation button:enabled:focus {
+  background: var(--color-brand-50);
+  color: var(--color-brand-700);
+}
+
+.react-calendar .react-calendar__month-view__weekdays__weekday {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.react-calendar .react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+}
+
+.react-calendar .react-calendar__tile {
+  font-size: 0.92rem;
+  padding: 0.6em 0.3em;
+  min-height: 44px;
+  border-radius: 0.75rem;
+  color: var(--color-slate-700);
+}
+
+.react-calendar .react-calendar__month-view__days__day--weekend {
+  color: var(--color-slate-700);
+}
+
+.react-calendar .react-calendar__month-view__days__day--neighboringMonth {
+  color: var(--color-slate-300);
+}
+
+.react-calendar .react-calendar__tile:enabled:hover,
+.react-calendar .react-calendar__tile:enabled:focus {
+  background: var(--color-brand-50);
+}
+
+.react-calendar .react-calendar__tile--now {
+  background: transparent;
+  color: var(--color-brand-700);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 2px var(--color-brand-200);
+}
+
+.react-calendar .react-calendar__tile--active,
+.react-calendar .react-calendar__tile--active:enabled:hover,
+.react-calendar .react-calendar__tile--active:enabled:focus {
+  background: var(--color-brand-600);
+  color: #fff;
 }
 
 body {
@@ -49,4 +228,48 @@ body {
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Halaman cetak (surat A4) ---- */
+/* Margin kertas ada di dalam .lembar (padding 15mm), bukan di @page: pilihan
+   "Margin: Tidak ada/Minimum" di dialog cetak Chrome mengabaikan margin @page
+   dan surat jadi menempel ke tepi kertas. margin 0 juga menghilangkan header/
+   footer browser (URL, tanggal) dari kertas. */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  .no-print { display: none !important; }
+
+  html, body { background: #fff !important; }
+
+  /* Lembar = kertas: bayangan & margin layar dibuang, padding 15mm tetap
+     sebagai margin. clone: bila surat sampai 2 halaman, halaman berikutnya
+     juga mendapat margin atas. */
+  .lembar {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    min-height: 0 !important;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  /* Blok tanda tangan jangan terbelah dua halaman */
+  .hindari-potong {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Penskalaan layar (agar surat muat di HP) dibatalkan saat mencetak —
+     kertas harus menerima A4 penuh, bukan versi yang diperkecil. */
+  .lembar-skala,
+  .lembar-skala-isi {
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    position: static !important;
+  }
 }

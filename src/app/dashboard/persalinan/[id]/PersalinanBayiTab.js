@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { fetcher } from "@/lib/fetcher";
 import toast from "react-hot-toast";
-import { FaEdit, FaSpinner, FaSave, FaTimes } from "react-icons/fa";
+import { FaEdit } from "react-icons/fa";
+import { AlertTriangle, Check, Minus } from "lucide-react";
+import Field from "@/components/Field";
+import { FormEdit, BagianForm } from "@/components/HalamanForm";
 
 const JENIS_KELAMIN_LABEL = {
   "laki-laki": "Laki-laki",
@@ -88,34 +91,31 @@ export default function PersalinanBayiTab({ persalinan, onRefresh }) {
 
   if (!editing) {
     return (
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="space-y-4">
         {(isBBLR || isApgarLow) && (
-          <div className="space-y-2">
+          <div className="space-y-2" role="status">
             {isBBLR && (
-              <div className="rounded-lg px-4 py-2.5 text-sm bg-red-50 border border-red-200 text-red-800">
-                ⚠️ Bayi BBLR — berat lahir {b.beratLahir} gram, pantau kondisi bayi
-              </div>
+              <Peringatan>Bayi BBLR — berat lahir {b.beratLahir} gram, pantau kondisi bayi</Peringatan>
             )}
             {isApgarLow && (
-              <div className="rounded-lg px-4 py-2.5 text-sm bg-red-50 border border-red-200 text-red-800">
-                ⚠️ Nilai Apgar 5 menit: {b.nilaiApgar5} — evaluasi kondisi neonatus
-              </div>
+              <Peringatan>Nilai Apgar 5 menit: {b.nilaiApgar5} — evaluasi kondisi neonatus</Peringatan>
             )}
           </div>
         )}
 
-        <div className="bg-white rounded-lg border shadow-sm p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-gray-800">Data Bayi</h3>
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm shadow-slate-900/[0.03] divide-y divide-slate-100">
+          <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4">
+            <h2 className="font-bold text-slate-800">Data Bayi</h2>
             <button
-              onClick={() => setEditing(true)}
-              className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition"
+              type="button"
+              onClick={() => { setForm(buildFormFromBayi(b)); setEditing(true); }}
+              className="inline-flex items-center gap-2 min-h-11 lg:min-h-9 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition active:scale-[0.98] shadow-sm shadow-brand-600/20"
             >
-              <FaEdit /> Edit
+              <FaEdit aria-hidden="true" /> Edit Data Bayi
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+          <div className="px-5 sm:px-6 py-5 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
             <InfoRow label="Jenis Kelamin" value={JENIS_KELAMIN_LABEL[b.jenisKelamin] || "-"} />
             <InfoRow label="Kondisi Bayi" value={KONDISI_BAYI_LABEL[b.kondisiBayi] || "-"} />
             <InfoRow
@@ -123,24 +123,13 @@ export default function PersalinanBayiTab({ persalinan, onRefresh }) {
               value={b.beratLahir != null ? `${b.beratLahir} gram` : "-"}
               highlight={isBBLR ? "text-red-600 font-bold" : ""}
             />
-            <InfoRow
-              label="Panjang Badan"
-              value={b.panjangBadan != null ? `${b.panjangBadan} cm` : "-"}
-            />
-            <InfoRow
-              label="Lingkar Kepala"
-              value={b.lingkarKepala != null ? `${b.lingkarKepala} cm` : "-"}
-            />
-            <InfoRow
-              label="Lingkar Dada"
-              value={b.lingkarDada != null ? `${b.lingkarDada} cm` : "-"}
-            />
+            <InfoRow label="Panjang Badan" value={b.panjangBadan != null ? `${b.panjangBadan} cm` : "-"} />
+            <InfoRow label="Lingkar Kepala" value={b.lingkarKepala != null ? `${b.lingkarKepala} cm` : "-"} />
+            <InfoRow label="Lingkar Dada" value={b.lingkarDada != null ? `${b.lingkarDada} cm` : "-"} />
           </div>
 
-          <div className="border-t pt-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Nilai Apgar
-            </p>
+          <div className="px-5 sm:px-6 py-5">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Nilai Apgar</p>
             <div className="flex gap-6">
               <ApgarBadge label="1 menit" value={b.nilaiApgar1} />
               <ApgarBadge label="5 menit" value={b.nilaiApgar5} />
@@ -148,10 +137,8 @@ export default function PersalinanBayiTab({ persalinan, onRefresh }) {
             </div>
           </div>
 
-          <div className="border-t pt-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Asuhan Bayi Baru Lahir
-            </p>
+          <div className="px-5 sm:px-6 py-5">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Asuhan Bayi Baru Lahir</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <CheckBadge label="IMD" done={b.imd} />
               <CheckBadge label="Vitamin K1" done={b.injeksiVitaminK} />
@@ -162,131 +149,105 @@ export default function PersalinanBayiTab({ persalinan, onRefresh }) {
           </div>
 
           {(b.komplikasiBayi || b.tindakanBayi) && (
-            <div className="border-t pt-3 space-y-3">
+            <div className="px-5 sm:px-6 py-5 space-y-3">
               {b.komplikasiBayi && <InfoRow label="Komplikasi" value={b.komplikasiBayi} />}
               {b.tindakanBayi && <InfoRow label="Tindakan Bayi" value={b.tindakanBayi} />}
             </div>
           )}
-        </div>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg border shadow-sm p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-gray-800">Edit Data Bayi</h3>
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition"
-          >
-            <FaTimes /> Batal
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Jenis Kelamin">
-            <select name="jenisKelamin" value={form.jenisKelamin} onChange={handleChange} className="input-em">
-              <option value="tidak_diketahui">Tidak Diketahui</option>
-              <option value="laki-laki">Laki-laki</option>
-              <option value="perempuan">Perempuan</option>
-            </select>
-          </Field>
-          <Field label="Kondisi Bayi">
-            <select name="kondisiBayi" value={form.kondisiBayi} onChange={handleChange} className="input-em">
-              <option value="hidup">Hidup</option>
-              <option value="meninggal">Meninggal</option>
-              <option value="iufd">IUFD</option>
-            </select>
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Berat Lahir (gram)">
-            <input name="beratLahir" type="number" min="0" value={form.beratLahir} onChange={handleChange} placeholder="3200" className="input-em" />
-          </Field>
-          <Field label="Panjang Badan (cm)">
-            <input name="panjangBadan" type="number" step="0.1" min="0" value={form.panjangBadan} onChange={handleChange} placeholder="50" className="input-em" />
-          </Field>
-          <Field label="Lingkar Kepala (cm)">
-            <input name="lingkarKepala" type="number" step="0.1" min="0" value={form.lingkarKepala} onChange={handleChange} placeholder="34" className="input-em" />
-          </Field>
-          <Field label="Lingkar Dada (cm)">
-            <input name="lingkarDada" type="number" step="0.1" min="0" value={form.lingkarDada} onChange={handleChange} placeholder="33" className="input-em" />
-          </Field>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Nilai Apgar</p>
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="1 Menit">
-              <input name="nilaiApgar1" type="number" min="0" max="10" value={form.nilaiApgar1} onChange={handleChange} placeholder="0–10" className="input-em" />
+    <div>
+      <FormEdit
+        onSubmit={handleSubmit}
+        busy={loading}
+        onBatal={handleCancel}
+        labelBatal="Batal"
+        labelSimpan="Simpan Data Bayi"
+      >
+        <BagianForm no={1} judul="Identitas & Kondisi">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-4">
+            <Field label="Jenis Kelamin">
+              <select name="jenisKelamin" value={form.jenisKelamin} onChange={handleChange} className="field">
+                <option value="tidak_diketahui">Tidak Diketahui</option>
+                <option value="laki-laki">Laki-laki</option>
+                <option value="perempuan">Perempuan</option>
+              </select>
             </Field>
-            <Field label="5 Menit">
-              <input name="nilaiApgar5" type="number" min="0" max="10" value={form.nilaiApgar5} onChange={handleChange} placeholder="0–10" className="input-em" />
-            </Field>
-            <Field label="10 Menit">
-              <input name="nilaiApgar10" type="number" min="0" max="10" value={form.nilaiApgar10} onChange={handleChange} placeholder="0–10" className="input-em" />
+            <Field label="Kondisi Bayi">
+              <select name="kondisiBayi" value={form.kondisiBayi} onChange={handleChange} className="field">
+                <option value="hidup">Hidup</option>
+                <option value="meninggal">Meninggal</option>
+                <option value="iufd">IUFD</option>
+              </select>
             </Field>
           </div>
-        </div>
+        </BagianForm>
 
-        <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Asuhan Bayi Baru Lahir</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-emerald-50/50 border border-emerald-100 rounded-md p-3">
+        <BagianForm no={2} judul="Antropometri" ket="Berat di bawah 2.500 gram ditandai BBLR">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Berat Lahir (gram)">
+              <input name="beratLahir" type="number" inputMode="numeric" min="0" value={form.beratLahir} onChange={handleChange} placeholder="3200" className="field" />
+            </Field>
+            <Field label="Panjang Badan (cm)">
+              <input name="panjangBadan" type="number" inputMode="decimal" step="0.1" min="0" value={form.panjangBadan} onChange={handleChange} placeholder="50" className="field" />
+            </Field>
+            <Field label="Lingkar Kepala (cm)">
+              <input name="lingkarKepala" type="number" inputMode="decimal" step="0.1" min="0" value={form.lingkarKepala} onChange={handleChange} placeholder="34" className="field" />
+            </Field>
+            <Field label="Lingkar Dada (cm)">
+              <input name="lingkarDada" type="number" inputMode="decimal" step="0.1" min="0" value={form.lingkarDada} onChange={handleChange} placeholder="33" className="field" />
+            </Field>
+          </div>
+        </BagianForm>
+
+        <BagianForm no={3} judul="Nilai Apgar" ket="Skor 0–10; di bawah 7 pada menit ke-5 perlu evaluasi">
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="1 Menit">
+              <input name="nilaiApgar1" type="number" inputMode="numeric" min="0" max="10" value={form.nilaiApgar1} onChange={handleChange} placeholder="0–10" className="field" />
+            </Field>
+            <Field label="5 Menit">
+              <input name="nilaiApgar5" type="number" inputMode="numeric" min="0" max="10" value={form.nilaiApgar5} onChange={handleChange} placeholder="0–10" className="field" />
+            </Field>
+            <Field label="10 Menit">
+              <input name="nilaiApgar10" type="number" inputMode="numeric" min="0" max="10" value={form.nilaiApgar10} onChange={handleChange} placeholder="0–10" className="field" />
+            </Field>
+          </div>
+        </BagianForm>
+
+        <BagianForm no={4} judul="Asuhan Bayi Baru Lahir">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <CheckInput name="imd" checked={form.imd} onChange={handleChange} label="Inisiasi Menyusu Dini (IMD)" />
             <CheckInput name="injeksiVitaminK" checked={form.injeksiVitaminK} onChange={handleChange} label="Injeksi Vitamin K1" />
             <CheckInput name="salepMata" checked={form.salepMata} onChange={handleChange} label="Salep/Tetes Mata" />
             <CheckInput name="imunisasiHB0" checked={form.imunisasiHB0} onChange={handleChange} label="Imunisasi HB0" />
             <CheckInput name="resusitasi" checked={form.resusitasi} onChange={handleChange} label="Resusitasi dilakukan" />
           </div>
-        </div>
+        </BagianForm>
 
-        <Field label="Komplikasi Bayi">
-          <textarea name="komplikasiBayi" value={form.komplikasiBayi} onChange={handleChange} rows={2} className="input-em resize-none" />
-        </Field>
-
-        <Field label="Tindakan Bayi">
-          <textarea name="tindakanBayi" value={form.tindakanBayi} onChange={handleChange} rows={2} className="input-em resize-none" />
-        </Field>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-md transition disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <><FaSpinner className="animate-spin" /> Menyimpan...</>
-          ) : (
-            <><FaSave /> Simpan Data Bayi</>
-          )}
-        </button>
-      </form>
-
-      <style jsx>{`
-        .input-em {
-          width: 100%;
-          padding: 0.5rem;
-          border: 1px solid #d1d5db;
-          border-radius: 0.375rem;
-          outline: none;
-        }
-        .input-em:focus {
-          border-color: #34d399;
-          box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3);
-        }
-      `}</style>
+        <BagianForm no={5} judul="Komplikasi & Tindakan">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Komplikasi Bayi">
+              <textarea name="komplikasiBayi" value={form.komplikasiBayi} onChange={handleChange} rows={2} className="field resize-none" />
+            </Field>
+            <Field label="Tindakan Bayi">
+              <textarea name="tindakanBayi" value={form.tindakanBayi} onChange={handleChange} rows={2} className="field resize-none" />
+            </Field>
+          </div>
+        </BagianForm>
+      </FormEdit>
     </div>
   );
 }
 
-function Field({ label, children }) {
+function Peringatan({ children }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-semibold text-gray-700">{label}</label>
-      {children}
+    <div className="flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm font-medium bg-red-50 border border-red-200 text-red-800">
+      <AlertTriangle size={16} className="shrink-0 mt-0.5" aria-hidden="true" />
+      <span>{children}</span>
     </div>
   );
 }
@@ -294,8 +255,8 @@ function Field({ label, children }) {
 function InfoRow({ label, value, highlight = "" }) {
   return (
     <div>
-      <span className="text-xs text-gray-400 uppercase tracking-wide">{label}</span>
-      <p className={`font-medium text-gray-800 ${highlight}`}>{value || "-"}</p>
+      <span className="text-xs text-slate-500 uppercase tracking-wide">{label}</span>
+      <p className={`font-medium text-slate-800 ${highlight}`}>{value || "-"}</p>
     </div>
   );
 }
@@ -303,29 +264,28 @@ function InfoRow({ label, value, highlight = "" }) {
 function CheckBadge({ label, done }) {
   return (
     <div
-      className={`flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-md border ${
-        done
-          ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-          : "bg-gray-50 border-gray-200 text-gray-400"
+      className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl border ${
+        done ? "bg-brand-50 border-brand-200 text-brand-700" : "bg-slate-50 border-slate-200 text-slate-500"
       }`}
     >
-      <span className="font-bold">{done ? "✓" : "—"}</span>
+      {done ? <Check size={15} aria-hidden="true" /> : <Minus size={15} aria-hidden="true" />}
       <span className="font-medium">{label}</span>
+      <span className="sr-only">{done ? "sudah" : "belum"}</span>
     </div>
   );
 }
 
 function CheckInput({ name, checked, onChange, label }) {
   return (
-    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+    <label className="flex items-center gap-3 min-h-11 px-3 rounded-xl border border-slate-200 hover:border-brand-200 hover:bg-brand-50/50 has-[:checked]:border-brand-300 has-[:checked]:bg-brand-50 cursor-pointer select-none transition">
       <input
         name={name}
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="w-4 h-4 rounded accent-emerald-600 shrink-0"
+        className="w-4 h-4 rounded accent-brand-600 shrink-0"
       />
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-sm font-medium text-slate-700">{label}</span>
     </label>
   );
 }
@@ -335,17 +295,17 @@ function ApgarBadge({ label, value }) {
   return (
     <div className="text-center">
       <div
-        className={`w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-base border-2 ${
+        className={`w-11 h-11 rounded-full mx-auto flex items-center justify-center font-bold text-base border-2 ${
           value == null
-            ? "border-gray-200 text-gray-300"
+            ? "border-slate-200 text-slate-400"
             : low
             ? "border-red-400 bg-red-50 text-red-700"
-            : "border-emerald-400 bg-emerald-50 text-emerald-700"
+            : "border-brand-400 bg-brand-50 text-brand-700"
         }`}
       >
         {value ?? "—"}
       </div>
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
+      <p className="text-xs text-slate-500 mt-1">{label}</p>
     </div>
   );
 }

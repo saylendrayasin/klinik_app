@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Kb } from "@/models/kb";
-import { errorResponse } from "@/lib/response";
+import { errorResponse, serverError } from "@/lib/response";
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 
@@ -238,7 +238,6 @@ export async function GET(req) {
       },
     });
   } catch (error) {
-    console.error("❌ Gagal ekspor data KB:", error);
-    return errorResponse("Gagal mengekspor data KB", 500, error.message);
+    return serverError(error, "Gagal mengekspor data KB");
   }
 }

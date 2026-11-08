@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
 import toast from "react-hot-toast";
-import { FaSpinner } from "react-icons/fa";
+import { FaHeartbeat } from "react-icons/fa";
+import Field from "@/components/Field";
+import HalamanForm, { BagianForm } from "@/components/HalamanForm";
 
 const todayStr = () => {
   const d = new Date();
@@ -56,123 +58,78 @@ export default function KbForm() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-md shadow-md p-4">
-      <h2 className="text-2xl font-bold text-center mb-8">Tambah Data KB</h2>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Nama */}
-        <div className="flex flex-col">
-          <label htmlFor="name" className="font-semibold text-gray-700 mb-2">
-            Nama Ibu
-          </label>
+    <HalamanForm
+      ikon={FaHeartbeat}
+      judul="Tambah Data KB"
+      sub="Kunjungan dan metode KB bisa ditambahkan setelah data tersimpan"
+      onSubmit={handleSubmit}
+      onBatal={handleBack}
+      busy={loading}
+      labelSimpan="Simpan KB"
+      lebar="max-w-2xl"
+    >
+      <BagianForm judul="Identitas Akseptor">
+        <Field label="Nama Ibu" required>
           <input
-            id="name"
             name="name"
             value={form.name}
             onChange={handleChange}
-            placeholder="Masukkan nama"
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+            placeholder="Nama lengkap"
+            autoComplete="off"
+            className="field"
             required
           />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="NIK" required>
+            <input
+              name="nik"
+              value={form.nik}
+              onChange={handleChange}
+              placeholder="16 digit NIK"
+              inputMode="numeric"
+              autoComplete="off"
+              className="field tabular-nums tracking-wide"
+              required
+            />
+          </Field>
+          <Field label="Tanggal Lahir" required>
+            <input
+              name="dateOfBirth"
+              type="date"
+              value={form.dateOfBirth}
+              onChange={handleChange}
+              max={todayStr()}
+              required
+              className="field"
+            />
+          </Field>
         </div>
 
-        {/* NIK */}
-        <div className="flex flex-col">
-          <label htmlFor="nik" className="font-semibold text-gray-700 mb-2">
-            NIK
-          </label>
-          <input
-            id="nik"
-            name="nik"
-            value={form.nik}
-            onChange={handleChange}
-            placeholder="Nomor Induk Kependudukan"
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
-            required
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_10rem] gap-4">
+          <Field label="Alamat">
+            <input
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              placeholder="Alamat lengkap"
+              className="field"
+            />
+          </Field>
+          <Field label="Jumlah Anak">
+            <input
+              name="numberOfChildren"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              value={form.numberOfChildren}
+              onChange={handleChange}
+              className="field"
+            />
+          </Field>
         </div>
-
-        {/* Tanggal Lahir */}
-        <div className="flex flex-col">
-          <label
-            htmlFor="dateOfBirth"
-            className="font-semibold text-gray-700 mb-2"
-          >
-            Tanggal Lahir
-          </label>
-          <input
-            id="dateOfBirth"
-            name="dateOfBirth"
-            type="date"
-            value={form.dateOfBirth}
-            onChange={handleChange}
-            max={todayStr()}
-            required
-            className="p-2 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
-          />
-        </div>
-
-        {/* Alamat */}
-        <div className="flex flex-col">
-          <label htmlFor="address" className="font-semibold text-gray-700 mb-2">
-            Alamat
-          </label>
-          <input
-            id="address"
-            name="address"
-            value={form.address}
-            onChange={handleChange}
-            placeholder="Masukkan alamat"
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
-          />
-        </div>
-
-        {/* Jumlah Anak */}
-        <div className="flex flex-col">
-          <label
-            htmlFor="numberOfChildren"
-            className="font-semibold text-gray-700 mb-2"
-          >
-            Jumlah Anak
-          </label>
-          <input
-            id="numberOfChildren"
-            name="numberOfChildren"
-            type="number"
-            min="0"
-            value={form.numberOfChildren}
-            onChange={handleChange}
-            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
-          />
-        </div>
-
-        {/* Tombol Aksi */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
-          <button
-            type="button"
-            onClick={handleBack}
-            disabled={loading}
-            className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-md transition disabled:opacity-50"
-          >
-            Kembali
-          </button>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-md transition disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <FaSpinner className="animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              "Simpan KB"
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
+      </BagianForm>
+    </HalamanForm>
   );
 }

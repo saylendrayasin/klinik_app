@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Patient } from "@/models/patient";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, errorResponse, serverError } from "@/lib/response";
 
 export async function GET(req, context) {
   const params = await context.params;
@@ -11,7 +11,7 @@ export async function GET(req, context) {
 
     return successResponse("Berhasil mengambil data pasien", patient);
   } catch (error) {
-    return errorResponse("Gagal mengambil data pasien", 400, error.message);
+    return serverError(error, "Gagal mengambil data pasien");
   }
 }
 
@@ -49,10 +49,9 @@ export async function PATCH(req, context) {
 
     await patient.save();
 
-    return successResponse("Berhasil update pasien", patient);
+    return successResponse("Data pasien berhasil diperbarui", patient);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal update pasien", 400, error.message);
+    return serverError(error, "Gagal memperbarui data pasien");
   }
 }
 
@@ -68,7 +67,6 @@ export async function DELETE(req, context) {
 
     return successResponse("Berhasil menghapus pasien", deletedPatient);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal menghapus pasien", 400, error.message);
+    return serverError(error, "Gagal menghapus pasien");
   }
 }

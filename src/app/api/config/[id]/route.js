@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/database";
 import { Config } from "@/models/config";
-import { successResponse, errorResponse } from "@/lib/response";
+import { successResponse, errorResponse, serverError } from "@/lib/response";
 
 function slugifyLabel(label) {
   return String(label || "")
@@ -18,11 +18,11 @@ export async function GET(req, context) {
     await connectDB();
 
     const item = await Config.findById(params.id);
-    if (!item) return errorResponse("Config tidak ditemukan", 404);
+    if (!item) return errorResponse("Konfigurasi tidak ditemukan", 404);
 
-    return successResponse("Berhasil mengambil data config", item);
+    return successResponse("Data konfigurasi berhasil diambil", item);
   } catch (error) {
-    return errorResponse("Gagal mengambil data config", 400, error.message);
+    return serverError(error, "Gagal mengambil data konfigurasi");
   }
 }
 
@@ -33,17 +33,17 @@ export async function PATCH(req, context) {
     const body = await req.json();
 
     const item = await Config.findById(params.id);
-    if (!item) return errorResponse("Config tidak ditemukan", 404);
+    if (!item) return errorResponse("Konfigurasi tidak ditemukan", 404);
 
     if (body.isActive !== undefined) item.isActive = !!body.isActive;
 
     if (body.label !== undefined) {
       const newLabel = String(body.label || "").trim();
-      if (!newLabel) return errorResponse("label tidak boleh kosong", 400);
+      if (!newLabel) return errorResponse("Label wajib diisi", 400);
 
       const newCode = slugifyLabel(newLabel);
       if (!newCode) {
-        return errorResponse("Label tidak valid setelah dinormalisasi", 400);
+        return errorResponse("Label harus mengandung huruf atau angka", 400);
       }
 
       const exists = await Config.findOne({
@@ -66,13 +66,12 @@ export async function PATCH(req, context) {
     }
 
     await item.save();
-    return successResponse("Berhasil update config", item);
+    return successResponse("Konfigurasi berhasil diperbarui", item);
   } catch (error) {
     if (String(error?.code) === "11000") {
-      return errorResponse("Duplikat: kombinasi type+code sudah ada", 409);
+      return errorResponse("Konfigurasi dengan label yang sama sudah ada", 409);
     }
-    console.error(error);
-    return errorResponse("Gagal update config", 400, error.message);
+    return serverError(error, "Gagal memperbarui konfigurasi");
   }
 }
 
@@ -89,12 +88,11 @@ export async function DELETE(req, context) {
     );
 
     if (!deletedItem) {
-      return errorResponse("Config tidak ditemukan", 404);
+      return errorResponse("Konfigurasi tidak ditemukan", 404);
     }
 
-    return successResponse("Berhasil menonaktifkan config", deletedItem);
+    return successResponse("Konfigurasi berhasil dinonaktifkan", deletedItem);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal menghapus config", 400, error.message);
+    return serverError(error, "Gagal menghapus konfigurasi");
   }
 }

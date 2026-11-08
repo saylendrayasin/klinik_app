@@ -4,8 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/fetcher";
 import toast from "react-hot-toast";
-import { FaSpinner, FaHospital } from "react-icons/fa";
+import { FaHospital } from "react-icons/fa";
 import { UserCheck } from "lucide-react";
+import { tanggalSingkat } from "@/lib/tanggal";
+import Field from "@/components/Field";
+import HalamanForm, { BagianForm } from "@/components/HalamanForm";
 
 const todayStr = () => {
   const d = new Date();
@@ -106,67 +109,66 @@ export default function PersalinanForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-200 shrink-0">
-          <FaHospital size={16} className="text-white" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-slate-800 leading-tight">Registrasi Ibu Persalinan</h1>
-          <p className="text-slate-500 text-xs mt-0.5">Data persalinan dan bayi dapat dilengkapi setelah persalinan</p>
-        </div>
-      </div>
+    <HalamanForm
+      ikon={FaHospital}
+      judul="Registrasi Ibu Persalinan"
+      sub="Data persalinan dan bayi dapat dilengkapi setelah persalinan"
+      onSubmit={handleSubmit}
+      onBatal={() => router.push("/dashboard/persalinan")}
+      busy={loading}
+      labelSimpan="Simpan & Lanjutkan"
+      lebar="max-w-2xl"
+    >
+      <BagianForm no={1} judul="Identitas Ibu" ket="Isi NIK lebih dulu agar data ibu yang pernah bersalin bisa diisi otomatis">
+        <Field label="NIK" required>
+          <input
+            name="nik"
+            value={form.nik}
+            onChange={handleChange}
+            onBlur={handleNikBlur}
+            placeholder="16 digit NIK"
+            inputMode="numeric"
+            autoComplete="off"
+            required
+            className="field tabular-nums tracking-wide"
+          />
+        </Field>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5">
-
-          <Field label="Nama Lengkap" required>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Nama lengkap ibu"
-              required
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition placeholder:text-slate-400"
-            />
-          </Field>
-
-          <Field label="NIK" required>
-            <input
-              name="nik"
-              value={form.nik}
-              onChange={handleChange}
-              onBlur={handleNikBlur}
-              placeholder="Nomor Induk Kependudukan"
-              required
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition placeholder:text-slate-400 font-mono"
-            />
-          </Field>
-
-          {ibuSebelumnya && (
-            <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <UserCheck size={16} className="text-blue-500 shrink-0" />
-                <p className="text-sm text-blue-800 min-w-0">
-                  <span className="font-semibold">{ibuSebelumnya.name}</span> pernah bersalin di klinik ini
-                  {ibuSebelumnya.tanggalPersalinan
-                    ? ` (${new Date(ibuSebelumnya.tanggalPersalinan).toLocaleDateString("id-ID")})`
-                    : ""}
-                  . Isi data otomatis?
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handlePrefill}
-                className="shrink-0 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-semibold transition active:scale-95"
-              >
-                Isi Otomatis
-              </button>
+        {ibuSebelumnya && (
+          <div className="anim-masuk rounded-xl bg-brand-50 border border-brand-200 px-4 py-3 flex flex-col min-[420px]:flex-row min-[420px]:items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <UserCheck size={16} className="text-brand-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="text-sm text-brand-800 min-w-0">
+                <span className="font-semibold">{ibuSebelumnya.name}</span> pernah bersalin di klinik ini
+                {ibuSebelumnya.tanggalPersalinan
+                  ? ` (${tanggalSingkat(ibuSebelumnya.tanggalPersalinan)})`
+                  : ""}
+                . Isi data otomatis?
+              </p>
             </div>
-          )}
+            <button
+              type="button"
+              onClick={handlePrefill}
+              className="shrink-0 min-h-11 text-sm bg-brand-600 hover:bg-brand-700 text-white px-4 rounded-xl font-semibold transition active:scale-95"
+            >
+              Isi Otomatis
+            </button>
+          </div>
+        )}
 
+        <Field label="Nama Lengkap" required>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Nama lengkap ibu"
+            autoComplete="off"
+            required
+            className="field"
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Tanggal Lahir" required>
             <input
               name="dateOfBirth"
@@ -175,121 +177,67 @@ export default function PersalinanForm() {
               onChange={handleChange}
               max={todayStr()}
               required
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition"
+              className="field"
             />
           </Field>
-
-          <Field label="Alamat">
-            <textarea
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              placeholder="Alamat lengkap"
-              rows={2}
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition placeholder:text-slate-400 resize-none"
-            />
+          <Field label="Golongan Darah">
+            <select name="bloodType" value={form.bloodType} onChange={handleChange} className="field">
+              <option value="">Tidak diketahui</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="AB">AB</option>
+              <option value="O">O</option>
+            </select>
           </Field>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="No. HP">
-              <input
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="08xx-xxxx-xxxx"
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition placeholder:text-slate-400"
-              />
-            </Field>
-            <Field label="Golongan Darah">
-              <select
-                name="bloodType"
-                value={form.bloodType}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition text-slate-700"
-              >
-                <option value="">-- Tidak diketahui --</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="AB">AB</option>
-                <option value="O">O</option>
-              </select>
-            </Field>
-          </div>
+        <Field label="No. HP">
+          <input
+            name="phone"
+            type="tel"
+            value={form.phone}
+            onChange={handleChange}
+            placeholder="08xx-xxxx-xxxx"
+            className="field"
+          />
+        </Field>
 
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Gravida (G)" required>
-              <input
-                name="gravida"
-                type="number"
-                min="1"
-                value={form.gravida}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition"
-              />
-            </Field>
-            <Field label="Para (P)">
-              <input
-                name="para"
-                type="number"
-                min="0"
-                value={form.para}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition"
-              />
-            </Field>
-            <Field label="Abortus (A)">
-              <input
-                name="abortus"
-                type="number"
-                min="0"
-                value={form.abortus}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition"
-              />
-            </Field>
-          </div>
+        <Field label="Alamat">
+          <textarea
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            placeholder="Alamat lengkap"
+            rows={2}
+            className="field resize-none"
+          />
+        </Field>
+      </BagianForm>
 
-          <Field label="Catatan">
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              rows={2}
-              placeholder="Catatan tambahan..."
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition placeholder:text-slate-400 resize-none"
-            />
+      <BagianForm no={2} judul="Riwayat Kehamilan" ket="Gravida, para, dan abortus sebelum persalinan ini">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <Field label="Gravida (G)" required>
+            <input name="gravida" type="number" inputMode="numeric" min="1" value={form.gravida} onChange={handleChange} className="field" />
           </Field>
+          <Field label="Para (P)">
+            <input name="para" type="number" inputMode="numeric" min="0" value={form.para} onChange={handleChange} className="field" />
+          </Field>
+          <Field label="Abortus (A)">
+            <input name="abortus" type="number" inputMode="numeric" min="0" value={form.abortus} onChange={handleChange} className="field" />
+          </Field>
+        </div>
 
-          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard/persalinan")}
-              className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-6 rounded-xl text-sm transition active:scale-95"
-            >
-              Kembali
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition shadow-md shadow-emerald-200 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
-            >
-              {loading ? <><FaSpinner className="animate-spin" /> Menyimpan...</> : "Simpan & Lanjutkan"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, required, children }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="font-semibold text-slate-700 text-sm">
-        {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      {children}
-    </div>
+        <Field label="Catatan">
+          <textarea
+            name="notes"
+            value={form.notes}
+            onChange={handleChange}
+            rows={2}
+            placeholder="Catatan tambahan..."
+            className="field resize-none"
+          />
+        </Field>
+      </BagianForm>
+    </HalamanForm>
   );
 }

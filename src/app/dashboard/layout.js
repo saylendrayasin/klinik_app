@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,61 +12,37 @@ import {
   FaHeartbeat,
   FaBaby,
   FaHospital,
+  FaFileSignature,
+  FaFileMedical,
 } from "react-icons/fa";
 import { useAuth } from "@/lib/auth";
-import { motion, AnimatePresence } from "framer-motion";
-import { Settings2 } from "lucide-react";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
+import { Database } from "lucide-react";
 
-const navItems = [
+const navGroups = [
   {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: <FaHome />,
-    activeColor: "text-sky-400",
-    activeBg: "bg-sky-500/10",
-    dot: "bg-sky-400",
+    judul: "Menu Utama",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: <FaHome /> },
+      { href: "/dashboard/patients", label: "Pasien", icon: <FaUsers /> },
+      { href: "/dashboard/kb", label: "KB", icon: <FaHeartbeat /> },
+      { href: "/dashboard/kehamilan", label: "Kehamilan", icon: <FaBaby /> },
+      { href: "/dashboard/persalinan", label: "Persalinan", icon: <FaHospital /> },
+    ],
   },
   {
-    href: "/dashboard/patients",
-    label: "Pasien",
-    icon: <FaUsers />,
-    activeColor: "text-blue-400",
-    activeBg: "bg-blue-500/10",
-    dot: "bg-blue-400",
+    judul: "Surat",
+    items: [
+      { href: "/dashboard/consent", label: "Persetujuan Tindakan", icon: <FaFileSignature /> },
+      { href: "/dashboard/surat-sakit", label: "Surat Keterangan Sakit", icon: <FaFileMedical /> },
+    ],
   },
   {
-    href: "/dashboard/kb",
-    label: "KB",
-    icon: <FaHeartbeat />,
-    activeColor: "text-violet-400",
-    activeBg: "bg-violet-500/10",
-    dot: "bg-violet-400",
-  },
-  {
-    href: "/dashboard/kehamilan",
-    label: "Kehamilan",
-    icon: <FaBaby />,
-    activeColor: "text-pink-400",
-    activeBg: "bg-pink-500/10",
-    dot: "bg-pink-400",
-  },
-  {
-    href: "/dashboard/persalinan",
-    label: "Persalinan",
-    icon: <FaHospital />,
-    activeColor: "text-emerald-400",
-    activeBg: "bg-emerald-500/10",
-    dot: "bg-emerald-400",
-  },
-  {
-    href: "/dashboard/config",
-    label: "Konfigurasi",
-    icon: <Settings2 size={16} />,
-    activeColor: "text-slate-300",
-    activeBg: "bg-slate-500/10",
-    dot: "bg-slate-400",
+    judul: "Pengaturan",
+    items: [{ href: "/dashboard/master", label: "Master Data", icon: <Database size={16} /> }],
   },
 ];
+const navItems = navGroups.flatMap((g) => g.items);
 
 function isItemActive(item, pathname) {
   return (
@@ -81,17 +57,25 @@ function NavLink({ item, pathname, onClick }) {
     <Link
       href={item.href}
       onClick={onClick}
-      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+      aria-current={active ? "page" : undefined}
+      className={`group relative flex items-center gap-3 px-3 min-h-11 rounded-xl text-sm font-medium transition-colors duration-150 ${
         active
-          ? `${item.activeBg} ${item.activeColor} ring-1 ring-white/10`
-          : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+          ? "bg-white/[0.12] text-white"
+          : "text-brand-100/70 hover:bg-white/[0.06] hover:text-white"
       }`}
     >
-      <span className={`text-base shrink-0 transition-colors ${active ? item.activeColor : "text-slate-500 group-hover:text-slate-300"}`}>
+      {active && (
+        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-brand-300" aria-hidden="true" />
+      )}
+      <span
+        className={`text-base shrink-0 transition-colors ${
+          active ? "text-brand-200" : "text-brand-100/50 group-hover:text-brand-100"
+        }`}
+        aria-hidden="true"
+      >
         {item.icon}
       </span>
       <span className="truncate flex-1">{item.label}</span>
-      {active && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.dot}`} />}
     </Link>
   );
 }
@@ -100,50 +84,49 @@ function SidebarContent({ pathname, onLinkClick, onSignOut }) {
   return (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/[0.07]">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-900/40">
-          <img src="/icons/icon-192x192.png" alt="Logo" className="w-5 h-5 object-contain" />
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/[0.08]">
+        <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-lg shadow-black/20 ring-1 ring-white/20">
+          <img src="/kop/logo-klinik.png" alt="Logo Klinik Iya" className="w-9 h-9 object-contain" />
         </div>
         <div className="min-w-0">
-          <p className="text-white font-bold text-sm truncate leading-tight">Klinik Iya</p>
-          <p className="text-slate-500 text-xs mt-0.5">
+          <p className="text-white font-bold text-[15px] truncate leading-tight">Klinik Iya</p>
+          <p className="text-brand-200/70 text-xs mt-0.5">
             Sistem Manajemen
             {process.env.NEXT_PUBLIC_APP_VERSION && (
-              <span className="ml-1.5 text-slate-600 font-mono">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
+              <span className="ml-1.5 text-brand-200/50 font-mono">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
             )}
           </p>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-3">Menu Utama</p>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            pathname={pathname}
-            onClick={onLinkClick}
-          />
+      <nav aria-label="Menu utama" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {navGroups.map((g, i) => (
+          <div key={g.judul} role="group" aria-labelledby={`nav-${i}`} className={`space-y-1 ${i ? "pt-4" : ""}`}>
+            <p id={`nav-${i}`} className="text-[11px] font-bold text-brand-200/50 uppercase tracking-widest px-3 mb-2">{g.judul}</p>
+            {g.items.map((item) => (
+              <NavLink key={item.href} item={item} pathname={pathname} onClick={onLinkClick} />
+            ))}
+          </div>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-white/[0.07]">
-        <div className="flex items-center gap-2.5 px-3 py-2.5 mb-2 rounded-xl bg-white/[0.03]">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shrink-0">
+      <div className="px-3 py-4 border-t border-white/[0.08]">
+        <div className="flex items-center gap-2.5 px-3 py-2.5 mb-2 rounded-xl bg-white/[0.05]">
+          <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center shrink-0">
             <span className="text-white text-xs font-bold">A</span>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-white text-xs font-semibold truncate">Admin</p>
-            <p className="text-slate-500 text-[10px] truncate">klinik-iya</p>
+            <p className="text-white text-sm font-semibold truncate">Admin</p>
+            <p className="text-brand-200/60 text-xs truncate">klinik-iya</p>
           </div>
         </div>
         <button
           onClick={onSignOut}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-150"
+          className="flex items-center gap-3 w-full px-3 min-h-11 rounded-xl text-sm font-medium text-brand-100/70 hover:bg-red-500/15 hover:text-red-300 transition-colors duration-150"
         >
-          <FaSignOutAlt className="text-sm shrink-0" />
+          <FaSignOutAlt className="text-sm shrink-0" aria-hidden="true" />
           <span>Keluar</span>
         </button>
       </div>
@@ -151,57 +134,72 @@ function SidebarContent({ pathname, onLinkClick, onSignOut }) {
   );
 }
 
+const SIDEBAR_BG = "bg-gradient-to-b from-brand-900 to-brand-950";
+
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { signOut } = useAuth();
-  const sidebarRef = useRef(null);
 
   const activeItem = navItems.find((item) => isItemActive(item, pathname));
 
+  // Laci menu: tutup dengan Escape, kunci gulir halaman di belakangnya.
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (sidebarOpen && sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-        setSidebarOpen(false);
-      }
+    if (!sidebarOpen) return;
+    const onKey = (e) => e.key === "Escape" && setSidebarOpen(false);
+    document.addEventListener("keydown", onKey);
+    const overflowLama = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflowLama;
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [sidebarOpen]);
 
+  // Pindah halaman → laci tertutup.
+  useEffect(() => setSidebarOpen(false), [pathname]);
+
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      {/* Mobile overlay */}
+    <MotionConfig reducedMotion="user">
+    <div className="flex h-dvh overflow-hidden bg-[var(--background)]">
+      {/* Overlay laci (HP & tablet) */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
             key="overlay"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.65 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900 z-40 sm:hidden backdrop-blur-sm"
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 bg-brand-950/60 backdrop-blur-[2px] z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
           />
         )}
       </AnimatePresence>
 
-      {/* Sidebar Mobile */}
+      {/* Laci menu (HP & tablet) */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.aside
             key="sidebar-mobile"
-            ref={sidebarRef}
+            id="laci-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu navigasi"
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-[#0f172a] flex flex-col sm:hidden shadow-2xl shadow-slate-900/60"
+            className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] ${SIDEBAR_BG} flex flex-col lg:hidden shadow-2xl`}
           >
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.08] transition"
+              aria-label="Tutup menu"
+              autoFocus
+              className="absolute top-4 right-3 w-11 h-11 flex items-center justify-center rounded-xl text-brand-100/70 hover:text-white hover:bg-white/[0.08] transition"
             >
-              <FaTimes size={13} />
+              <FaTimes size={16} />
             </button>
             <SidebarContent
               pathname={pathname}
@@ -212,47 +210,49 @@ export default function DashboardLayout({ children }) {
         )}
       </AnimatePresence>
 
-      {/* Sidebar Desktop */}
-      <aside className="hidden sm:flex sm:flex-col w-60 bg-[#0f172a] fixed inset-y-0 left-0 z-50 shadow-xl shadow-slate-900/30">
-        <SidebarContent
-          pathname={pathname}
-          onSignOut={signOut}
-        />
+      {/* Sidebar desktop */}
+      <aside className={`hidden lg:flex lg:flex-col w-64 ${SIDEBAR_BG} fixed inset-y-0 left-0 z-30`}>
+        <SidebarContent pathname={pathname} onSignOut={signOut} />
       </aside>
 
-      {/* Main area */}
-      <div className="flex-1 flex flex-col overflow-hidden sm:ml-60">
-        {/* Mobile topbar */}
-        <header className="flex items-center justify-between bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 sm:hidden shadow-sm">
+      {/* Area utama */}
+      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
+        {/* Topbar HP & tablet */}
+        <header className="flex items-center justify-between gap-2 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-5 py-2 lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition"
+            aria-label="Buka menu"
+            aria-expanded={sidebarOpen}
+            aria-controls="laci-menu"
+            className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 transition"
           >
-            <FaBars size={16} className="text-slate-600" />
+            <FaBars size={18} />
           </button>
 
-          <div className="flex items-center gap-2">
-            <span className={`text-sm ${activeItem?.activeColor || "text-slate-500"}`}>
-              {activeItem?.icon}
-            </span>
-            <span className="text-sm font-bold text-slate-800">
+          <div className="flex items-center gap-2 min-w-0">
+            <img src="/kop/logo-klinik.png" alt="" className="w-7 h-7 object-contain shrink-0" />
+            <span className="text-[15px] font-bold text-slate-800 truncate">
               {activeItem?.label || "Dashboard"}
             </span>
           </div>
 
           <button
             onClick={signOut}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition"
+            aria-label="Keluar"
+            className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition"
           >
-            <FaSignOutAlt size={14} />
+            <FaSignOutAlt size={16} />
           </button>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-3 sm:p-6">
-          {children}
+        {/* Isi halaman */}
+        {/* relative: elemen absolute tanpa induk berposisi (input sr-only di Saklar/Segmen)
+            harus ikut gulir di sini, bukan memanjangkan dokumen di luar <main> */}
+        <main className="relative flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
       </div>
     </div>
+    </MotionConfig>
   );
 }

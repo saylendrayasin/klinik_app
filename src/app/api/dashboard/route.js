@@ -3,9 +3,8 @@ import { Patient } from "@/models/patient";
 import { Kb } from "@/models/kb";
 import { Kehamilan } from "@/models/kehamilan";
 import { Persalinan } from "@/models/persalinan";
-import { successResponse, errorResponse } from "@/lib/response";
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+import { successResponse, errorResponse, serverError } from "@/lib/response";
+import { MS_PER_DAY, jadwalTerlewatQuery } from "@/lib/kehamilan";
 
 export async function GET() {
   try {
@@ -31,7 +30,7 @@ export async function GET() {
       Kehamilan.countDocuments({ status: "aktif", hpl: { $lt: today } }),
       Kehamilan.countDocuments({
         status: "aktif",
-        "visits.jadwalBerikutnya": { $exists: true, $lt: today },
+        ...jadwalTerlewatQuery(today),
       }),
     ]);
 
@@ -43,7 +42,6 @@ export async function GET() {
       alerts: { hplDekat, hplOverdue, jadwalTerlewat },
     });
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil statistik dashboard", 500);
+    return serverError(error, "Gagal mengambil statistik dashboard");
   }
 }

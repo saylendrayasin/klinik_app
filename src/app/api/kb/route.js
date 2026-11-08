@@ -1,57 +1,64 @@
 import { connectDB } from "@/lib/database";
 import { Kb } from "@/models/kb";
-import { successResponse, paginatedResponse, errorResponse } from "@/lib/response";
+import { successResponse, paginatedResponse, errorResponse, serverError } from "@/lib/response";
+import { escapeRegex, parsePagination, pilihField } from "@/lib/query";
 
-const ALLOWED_SORT_KB = ["name", "nik", "createdAt"];
+const ALLOWED_SORT_KB = ["name", "nik", "dateOfBirth", "createdAt"];
 
 export async function GET(req) {
   try {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 5;
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 5 });
     const search = searchParams.get("search") || "";
     const rawSort = searchParams.get("sort");
     const sortField = ALLOWED_SORT_KB.includes(rawSort) ? rawSort : "name";
 
-    const skip = (page - 1) * limit;
+    const query = {};
+    if (search) {
+      const escaped = escapeRegex(search);
+      query.$or = [
+        { name: { $regex: escaped, $options: "i" } },
+        { nik: { $regex: escaped, $options: "i" } },
+      ];
+    }
 
-    const query = search ? { name: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : {};
+    // Halaman list hanya butuh 5 kolom — jangan tarik seluruh array visits[].
+    const [data, totalData] = await Promise.all([
+      Kb.find(query)
+        .select("name nik dateOfBirth numberOfChildren")
+        .sort({ [sortField]: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Kb.countDocuments(query),
+    ]);
 
-    const data = await Kb.find(query)
-      .sort({ [sortField]: 1 })
-      .skip(skip)
-      .limit(limit);
-
-    const totalData = await Kb.countDocuments(query);
     const totalPages = Math.max(1, Math.ceil(totalData / limit));
 
     return paginatedResponse("Data KB berhasil diambil", data, page, totalPages);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil data KB", 500);
+    return serverError(error, "Gagal mengambil data KB");
   }
 }
 
 export async function POST(req) {
   try {
     await connectDB();
-    const body = await req.json();
-    const created = await Kb.create(body);
+    // metodes diturunkan dari kunjungan; kunjungan ditambah lewat PATCH.
+    const data = pilihField(await req.json(), ["name", "nik", "dateOfBirth", "address", "numberOfChildren"]);
+    const created = await Kb.create(data);
     return successResponse("Data KB berhasil ditambahkan", created, 201);
   } catch (error) {
-    console.error(error);
-
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
       return errorResponse(
         `${field} sudah terdaftar, silakan gunakan nilai lain`,
-        409,
-        error.message
+        409
       );
     }
 
-    return errorResponse("Gagal menambahkan data KB", 400, error.message);
+    return serverError(error, "Gagal menambahkan data KB");
   }
 }

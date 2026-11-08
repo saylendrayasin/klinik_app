@@ -1,14 +1,19 @@
 "use client";
 
+import Modal, { btnBatal, btnExcel } from "@/components/Modal";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher, fetchBlob } from "@/lib/fetcher";
 import { FaEye, FaTrash, FaFileExcel, FaHospital, FaPlus } from "react-icons/fa";
 import {
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Search, SlidersHorizontal,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import toast from "react-hot-toast";
+import { tanggalSingkat as fmtDate } from "@/lib/tanggal";
+import Paginasi from "@/components/Paginasi";
+import KartuRingkasan from "@/components/KartuRingkasan";
 
 function calcAge(dob) {
   if (!dob) return "-";
@@ -18,11 +23,6 @@ function calcAge(dob) {
   let age = today.getFullYear() - birth.getFullYear();
   if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
   return Math.max(0, age);
-}
-
-function fmtDate(d) {
-  if (!d) return "-";
-  try { return new Date(d).toLocaleDateString("id-ID"); } catch { return "-"; }
 }
 
 function getFlags(doc) {
@@ -35,8 +35,8 @@ function getFlags(doc) {
 }
 
 const STATUS_BADGE = {
-  terdaftar: "bg-sky-100 text-sky-700",
-  aktif: "bg-emerald-100 text-emerald-700",
+  terdaftar: "bg-slate-100 text-slate-600",
+  aktif: "bg-brand-100 text-brand-700",
   selesai: "bg-green-100 text-green-700",
   rujuk: "bg-amber-100 text-amber-700",
   meninggal: "bg-slate-100 text-slate-600",
@@ -124,9 +124,7 @@ export default function DashboardPersalinanPage() {
     setExportOpen(false);
     const toastId = toast.loading("Menyiapkan file...");
     try {
-      const res = await fetch(`/api/persalinan/export?${qs}`, { credentials: "include" });
-      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.message || "Gagal export"); }
-      const blob = await res.blob();
+      const blob = await fetchBlob(`/api/persalinan/export?${qs}`);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -142,7 +140,7 @@ export default function DashboardPersalinanPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-200 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-md shadow-brand-200 shrink-0">
             <FaHospital size={16} className="text-white" />
           </div>
           <div>
@@ -150,11 +148,11 @@ export default function DashboardPersalinanPage() {
             <p className="text-slate-500 text-xs mt-0.5">Pencatatan persalinan dan kunjungan nifas ibu</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button onClick={() => setExportOpen(true)} className="inline-flex items-center justify-center gap-2 bg-teal-50 hover:bg-teal-500 text-teal-600 hover:text-white border border-teal-200 hover:border-teal-500 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-150 active:scale-95">
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <button onClick={() => setExportOpen(true)} className="inline-flex items-center justify-center gap-2 min-h-11 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 hover:border-emerald-600 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-150 active:scale-95">
             <FaFileExcel size={13} /> Export Excel
           </button>
-          <Link href="/dashboard/persalinan/new" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition-all duration-150 shadow-md shadow-emerald-200 hover:shadow-lg hover:-translate-y-px active:scale-95">
+          <Link href="/dashboard/persalinan/new" className="inline-flex items-center justify-center gap-2 min-h-11 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition-all duration-150 shadow-md shadow-brand-200 hover:shadow-lg hover:-translate-y-px active:scale-95">
             <FaPlus size={11} /> Tambah
           </Link>
         </div>
@@ -162,20 +160,20 @@ export default function DashboardPersalinanPage() {
 
       {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-          <SummaryCard label="Belum Bersalin" value={summary.belumPersalinan} color="blue" active={filter === "belumPersalinan"} onClick={() => { setFilter("belumPersalinan"); setStatus(""); setPage(1); }} />
-          <SummaryCard label="Persalinan Bulan Ini" value={summary.totalBulanIni} color="emerald" active={false} onClick={() => { setFilter(""); setStatus(""); setPage(1); }} />
-          <SummaryCard label="Nifas Aktif" value={summary.aktif} color="teal" active={!filter && status === "aktif"} onClick={() => { setFilter(""); setStatus("aktif"); setPage(1); }} />
-          <SummaryCard label="Kunjungan Terlewat" value={summary.kunjunganTerlewat} color="orange" active={false} onClick={() => { setFilter(""); setStatus("aktif"); setPage(1); }} />
-          <SummaryCard label="Perlu Perhatian" value={summary.perluPerhatian} color="red" active={filter === "perluPerhatian"} onClick={() => { setFilter("perluPerhatian"); setStatus(""); setPage(1); }} />
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 anim-stagger [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1">
+          <KartuRingkasan label="Belum Bersalin" value={summary.belumPersalinan} nada="brand" active={filter === "belumPersalinan"} onClick={() => { setFilter("belumPersalinan"); setStatus(""); setPage(1); }} />
+          <KartuRingkasan label="Persalinan Bulan Ini" value={summary.totalBulanIni} nada="brand" active={false} onClick={() => { setFilter(""); setStatus(""); setPage(1); }} />
+          <KartuRingkasan label="Nifas Aktif" value={summary.aktif} nada="brand" active={!filter && status === "aktif"} onClick={() => { setFilter(""); setStatus("aktif"); setPage(1); }} />
+          <KartuRingkasan label="Kunjungan Terlewat" value={summary.kunjunganTerlewat} nada="orange" active={false} onClick={() => { setFilter(""); setStatus("aktif"); setPage(1); }} />
+          <KartuRingkasan label="Perlu Perhatian" value={summary.perluPerhatian} nada="red" active={filter === "perluPerhatian"} onClick={() => { setFilter("perluPerhatian"); setStatus(""); setPage(1); }} />
         </div>
       )}
 
       {/* Active filter chip */}
       {filter && (
         <div className="flex items-center gap-2 text-sm">
-          <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="bg-brand-100 text-brand-700 px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
             {filter === "perluPerhatian" ? "Perlu Perhatian" : filter === "belumPersalinan" ? "Belum Bersalin" : filter}
           </span>
           <button onClick={() => { setFilter(""); setStatus(""); setPage(1); }} className="text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2">Hapus filter</button>
@@ -183,16 +181,16 @@ export default function DashboardPersalinanPage() {
       )}
 
       {/* Search & Sort */}
-      <div className="flex flex-col sm:flex-row gap-2.5">
-        <div className="relative flex-1">
+      <div className="grid grid-cols-2 gap-2.5 sm:flex">
+        <div className="relative col-span-2 sm:flex-1">
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input type="text" placeholder="Cari nama / NIK..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-300 transition shadow-sm placeholder:text-slate-400" />
+          <input aria-label="Cari nama / NIK" type="text" placeholder="Cari nama / NIK..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
+            className="field pl-10" />
         </div>
-        <div className="relative sm:w-40">
-          <SlidersHorizontal size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <select value={status} onChange={(e) => { setFilter(""); setStatus(e.target.value); setPage(1); }} disabled={!!filter}
-            className="appearance-none w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition shadow-sm text-slate-700 disabled:opacity-50">
+        <div className="relative min-w-0 sm:w-40">
+          <SlidersHorizontal size={13} className="hidden sm:block absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <select aria-label="Saring status" value={status} onChange={(e) => { setFilter(""); setStatus(e.target.value); setPage(1); }} disabled={!!filter}
+            className="field sm:pl-9 disabled:opacity-50">
             <option value="">Semua Status</option>
             <option value="terdaftar">Terdaftar</option>
             <option value="aktif">Aktif</option>
@@ -200,16 +198,14 @@ export default function DashboardPersalinanPage() {
             <option value="rujuk">Rujuk</option>
             <option value="meninggal">Meninggal</option>
           </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"><svg className="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path d="M7 7l3-3 3 3m0 6l-3 3-3-3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
         </div>
-        <div className="relative sm:w-48">
-          <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}
-            className="appearance-none w-full px-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition shadow-sm text-slate-700">
+        <div className="relative min-w-0 sm:w-48">
+          <select aria-label="Urutkan daftar" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}
+            className="field">
             <option value="tanggalPersalinan">Tanggal Terbaru</option>
             <option value="name">Nama</option>
             <option value="createdAt">Ditambahkan</option>
           </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"><svg className="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path d="M7 7l3-3 3 3m0 6l-3 3-3-3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
         </div>
       </div>
 
@@ -217,16 +213,16 @@ export default function DashboardPersalinanPage() {
       <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-gradient-to-r from-emerald-50 to-teal-50/40 border-b border-emerald-100">
+            <tr className="bg-gradient-to-r from-brand-50 to-brand-50/40 border-b border-brand-100">
               {["Nama", "NIK", "Umur", "Tanggal Persalinan", "Status", "Aksi"].map((h) => (
-                <th key={h} className={`py-3.5 px-4 text-[11px] font-bold text-emerald-700 uppercase tracking-wider ${h === "Aksi" ? "text-center" : "text-left"}`}>{h}</th>
+                <th key={h} className={`py-3.5 px-4 text-[11px] font-bold text-brand-700 uppercase tracking-wider ${h === "Aksi" ? "text-center" : "text-left"}`}>{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 anim-stagger">
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
+                  <tr key={i}>
                     {Array.from({ length: 6 }).map((__, j) => (
                       <td key={j} className="py-3.5 px-4"><div className="h-4 bg-slate-100 rounded-lg w-3/4 skeleton" /></td>
                     ))}
@@ -244,13 +240,13 @@ export default function DashboardPersalinanPage() {
                     <td className="py-3 px-4 font-medium text-slate-800">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {doc.name}
-                        {flags.komplikasi && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">Komplikasi</span>}
-                        {flags.bblr && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">BBLR</span>}
-                        {flags.apgarRendah && <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-semibold">Apgar Rendah</span>}
-                        {flags.kfTerlewat && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full font-semibold">KF Terlewat</span>}
+                        {flags.komplikasi && <span className="text-[11px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">Komplikasi</span>}
+                        {flags.bblr && <span className="text-[11px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">BBLR</span>}
+                        {flags.apgarRendah && <span className="text-[11px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-semibold">Apgar Rendah</span>}
+                        {flags.kfTerlewat && <span className="text-[11px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full font-semibold">KF Terlewat</span>}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-500 font-mono text-xs">{doc.nik}</td>
+                    <td className="py-3 px-4 text-slate-500 tabular-nums text-xs">{doc.nik}</td>
                     <td className="py-3 px-4 text-slate-600">{calcAge(doc.dateOfBirth)} th</td>
                     <td className="py-3 px-4">
                       {doc.tanggalPersalinan ? <span className="text-slate-700">{fmtDate(doc.tanggalPersalinan)}</span> : (
@@ -262,10 +258,10 @@ export default function DashboardPersalinanPage() {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex justify-center gap-2">
-                        <Link href={`/dashboard/persalinan/${doc._id}`} className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95">
+                        <Link href={`/dashboard/persalinan/${doc._id}`} className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 min-h-11 lg:min-h-9 rounded-lg text-xs font-semibold transition active:scale-95">
                           <FaEye size={10} /> Lihat
                         </Link>
-                        <button onClick={() => setDeleteTarget({ id: doc._id, name: doc.name })} className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-200 hover:border-red-500 px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95">
+                        <button onClick={() => setDeleteTarget({ id: doc._id, name: doc.name })} className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-red-500 px-3 py-1.5 min-h-11 lg:min-h-9 rounded-lg text-xs font-semibold transition active:scale-95">
                           <FaTrash size={10} /> Hapus
                         </button>
                       </div>
@@ -278,10 +274,10 @@ export default function DashboardPersalinanPage() {
       </div>
 
       {/* Cards Mobile */}
-      <div className="block sm:hidden space-y-3">
+      <div className="block sm:hidden space-y-3 anim-stagger">
         {loading
           ? Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 animate-pulse space-y-3 shadow-sm">
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
                 <div className="h-5 bg-slate-100 rounded-lg w-1/2 skeleton" />
                 <div className="h-4 bg-slate-100 rounded-lg w-2/3 skeleton" />
                 <div className="flex gap-2 mt-2"><div className="flex-1 h-9 bg-slate-100 rounded-xl skeleton" /><div className="flex-1 h-9 bg-slate-100 rounded-xl skeleton" /></div>
@@ -293,7 +289,6 @@ export default function DashboardPersalinanPage() {
               const flags = getFlags(doc);
               return (
                 <div key={doc._id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
                   <div className="p-4 space-y-2.5">
                     <div className="flex items-start justify-between gap-2 min-w-0">
                       <h2 className="text-sm font-bold text-slate-800 truncate flex-1 min-w-0">{doc.name}</h2>
@@ -301,23 +296,23 @@ export default function DashboardPersalinanPage() {
                     </div>
                     {(flags.komplikasi || flags.bblr || flags.apgarRendah || flags.kfTerlewat) && (
                       <div className="flex gap-1.5 flex-wrap">
-                        {flags.komplikasi && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">Komplikasi</span>}
-                        {flags.bblr && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">BBLR</span>}
-                        {flags.apgarRendah && <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-semibold">Apgar Rendah</span>}
-                        {flags.kfTerlewat && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full font-semibold">KF Terlewat</span>}
+                        {flags.komplikasi && <span className="text-[11px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">Komplikasi</span>}
+                        {flags.bblr && <span className="text-[11px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold">BBLR</span>}
+                        {flags.apgarRendah && <span className="text-[11px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-semibold">Apgar Rendah</span>}
+                        {flags.kfTerlewat && <span className="text-[11px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full font-semibold">KF Terlewat</span>}
                       </div>
                     )}
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                      <span className="font-mono">{doc.nik}</span>
+                      <span className="tabular-nums">{doc.nik}</span>
                       <span>{calcAge(doc.dateOfBirth)} tahun</span>
                       {doc.tanggalPersalinan ? <span>Tgl: <strong className="text-slate-700">{fmtDate(doc.tanggalPersalinan)}</strong></span> : <span className="text-amber-600 font-semibold">Belum bersalin</span>}
                     </div>
                     <div className="flex gap-2 pt-1">
-                      <Link href={`/dashboard/persalinan/${doc._id}`} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95">
+                      <Link href={`/dashboard/persalinan/${doc._id}`} className="flex-1 min-h-11 bg-brand-50 hover:bg-brand-100 text-brand-700 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition active:scale-[0.98]">
                         <FaEye size={12} /> Lihat
                       </Link>
-                      <button onClick={() => setDeleteTarget({ id: doc._id, name: doc.name })} className="flex-1 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-200 hover:border-red-500 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95">
-                        <FaTrash size={11} /> Hapus
+                      <button onClick={() => setDeleteTarget({ id: doc._id, name: doc.name })} aria-label={`Hapus ${doc.name}`} className="shrink-0 min-h-11 min-w-11 bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 flex items-center justify-center rounded-xl transition active:scale-[0.98]">
+                        <FaTrash size={14} aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -328,13 +323,7 @@ export default function DashboardPersalinanPage() {
 
       {/* Pagination */}
       {list.length > 0 && (
-        <div className="flex items-center justify-center gap-1.5 pt-2">
-          <PagBtn onClick={() => setPage(1)} disabled={page === 1 || loading}><ChevronsLeft className="w-4 h-4" /></PagBtn>
-          <PagBtn onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1 || loading}><ChevronLeft className="w-4 h-4" /></PagBtn>
-          <span className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm min-w-[64px] text-center">{page} / {totalPages}</span>
-          <PagBtn onClick={() => setPage((p) => Math.min(p + 1, totalPages))} disabled={page === totalPages || loading}><ChevronRight className="w-4 h-4" /></PagBtn>
-          <PagBtn onClick={() => setPage(totalPages)} disabled={page === totalPages || loading}><ChevronsRight className="w-4 h-4" /></PagBtn>
-        </div>
+        <Paginasi page={page} totalPages={totalPages} loading={loading} onChange={setPage} />
       )}
 
       <ConfirmModal
@@ -347,71 +336,43 @@ export default function DashboardPersalinanPage() {
       />
 
       {/* Export Modal */}
-      {exportOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setExportOpen(false)} />
-          <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <div><h3 className="font-bold text-slate-800">Export Data Persalinan</h3><p className="text-xs text-slate-500 mt-0.5">Pilih mode dan rentang tanggal</p></div>
-              <button onClick={() => setExportOpen(false)} aria-label="Tutup" className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Mode Export</label>
-                <select value={exportMode} onChange={(e) => setExportMode(e.target.value)} className="p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 bg-white">
-                  <option value="persalinan">Data Persalinan (per rentang tanggal)</option>
-                  <option value="nifas">Kunjungan Nifas (per rentang tanggal)</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Dari</label>
-                  <input type="date" value={exportFrom} onChange={(e) => setExportFrom(e.target.value)} className="p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 bg-white" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Sampai</label>
-                  <input type="date" value={exportTo} onChange={(e) => setExportTo(e.target.value)} className="p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 bg-white" />
-                </div>
-              </div>
-            </div>
-            <div className="px-5 py-4 border-t border-slate-100 flex gap-2.5">
-              <button onClick={() => setExportOpen(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm transition">Batal</button>
-              <button onClick={handleExport} className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold py-2.5 rounded-xl text-sm transition inline-flex items-center justify-center gap-2">
-                <FaFileExcel size={13} /> Download
-              </button>
-            </div>
+      <Modal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        title="Export Data Persalinan"
+        subtitle="Pilih mode dan rentang tanggal"
+        size="sm:max-w-md"
+        aksen="bg-emerald-500"
+        tutupDiLuar
+        footer={
+          <>
+            <button type="button" onClick={() => setExportOpen(false)} className={btnBatal}>Batal</button>
+            <button type="button" onClick={handleExport} className={btnExcel}>
+              <FaFileExcel size={13} /> Download
+            </button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="export-salin-mode-export" className="text-sm font-semibold text-slate-700">Mode Export</label>
+          <select id="export-salin-mode-export" value={exportMode} onChange={(e) => setExportMode(e.target.value)} className="field">
+            <option value="persalinan">Data Persalinan (per rentang tanggal)</option>
+            <option value="nifas">Kunjungan Nifas (per rentang tanggal)</option>
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="export-salin-dari" className="text-sm font-semibold text-slate-700">Dari</label>
+            <input id="export-salin-dari" type="date" value={exportFrom} onChange={(e) => setExportFrom(e.target.value)} className="field" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="export-salin-sampai" className="text-sm font-semibold text-slate-700">Sampai</label>
+            <input id="export-salin-sampai" type="date" value={exportTo} onChange={(e) => setExportTo(e.target.value)} className="field" />
           </div>
         </div>
-      )}
+
+      </Modal>
     </div>
   );
 }
 
-function SummaryCard({ label, value, color, active, onClick }) {
-  const styles = {
-    blue: { card: "bg-white border-slate-200 text-blue-700", active: "ring-2 ring-blue-400 border-blue-200 bg-blue-50", dot: "bg-blue-500" },
-    emerald: { card: "bg-white border-slate-200 text-emerald-700", active: "ring-2 ring-emerald-400 border-emerald-200 bg-emerald-50", dot: "bg-emerald-500" },
-    teal: { card: "bg-white border-slate-200 text-teal-700", active: "ring-2 ring-teal-400 border-teal-200 bg-teal-50", dot: "bg-teal-500" },
-    orange: { card: "bg-white border-slate-200 text-orange-700", active: "ring-2 ring-orange-400 border-orange-200 bg-orange-50", dot: "bg-orange-500" },
-    red: { card: "bg-white border-slate-200 text-red-700", active: "ring-2 ring-red-400 border-red-200 bg-red-50", dot: "bg-red-500" },
-  };
-  const s = styles[color];
-  return (
-    <button onClick={onClick} className={`border rounded-2xl p-3.5 text-left w-full hover:shadow-md transition-all duration-150 ${active ? s.active : s.card}`}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-        <p className="text-xs font-semibold opacity-75 leading-tight">{label}</p>
-      </div>
-      <p className="text-2xl font-bold mt-0.5">{value ?? "-"}</p>
-    </button>
-  );
-}
-
-function PagBtn({ onClick, disabled, children }) {
-  return (
-    <button onClick={onClick} disabled={disabled} className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-35 disabled:cursor-not-allowed transition shadow-sm">
-      {children}
-    </button>
-  );
-}

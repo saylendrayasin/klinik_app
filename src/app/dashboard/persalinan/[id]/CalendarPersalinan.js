@@ -5,6 +5,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
+import { AlertTriangle } from "lucide-react";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -79,8 +80,8 @@ export default function CalendarPersalinan({ persalinan }) {
 
     return (
       <div className="mt-1 flex justify-center items-center gap-0.5 flex-wrap">
-        {hasVisit && <span className="w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-emerald-300" title="Kunjungan Nifas" />}
-        {isJadwal && !hasVisit && <span className="w-2.5 h-2.5 rounded-full border-2 border-emerald-500 bg-white" title="Jadwal KF Berikutnya" />}
+        {hasVisit && <span className="w-2 h-2 rounded-full bg-brand-500 ring-1 ring-brand-300" title="Kunjungan Nifas" />}
+        {isJadwal && !hasVisit && <span className="w-2.5 h-2.5 rounded-full border-2 border-brand-500 bg-white" title="Jadwal KF Berikutnya" />}
         {isPersalinan && <span className="w-2 h-2 rounded-full bg-amber-400 ring-1 ring-amber-200" title="Tanggal Persalinan" />}
       </div>
     );
@@ -96,7 +97,6 @@ export default function CalendarPersalinan({ persalinan }) {
     <div className="max-w-4xl mx-auto space-y-4">
       {/* Calendar card */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
         <div className="p-4">
           <Calendar
             onChange={setSelectedDate}
@@ -110,12 +110,12 @@ export default function CalendarPersalinan({ persalinan }) {
 
       {/* Legend */}
       <div className="flex flex-wrap justify-center gap-2 text-xs">
-        <span className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-emerald-300" />
+        <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-200 text-brand-700 px-3 py-1.5 rounded-full font-medium">
+          <span className="w-2 h-2 rounded-full bg-brand-500 ring-1 ring-brand-300" />
           Kunjungan Nifas
         </span>
-        <span className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full font-medium">
-          <span className="w-2.5 h-2.5 rounded-full border-2 border-emerald-500 bg-white" />
+        <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-200 text-brand-700 px-3 py-1.5 rounded-full font-medium">
+          <span className="w-2.5 h-2.5 rounded-full border-2 border-brand-500 bg-white" />
           Jadwal KF Berikutnya
         </span>
         <span className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full font-medium">
@@ -127,7 +127,6 @@ export default function CalendarPersalinan({ persalinan }) {
       {/* Detail panel */}
       {hasDetail ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
           <div className="p-4 sm:p-5">
             <h3 className="font-bold text-slate-800 text-sm mb-3">{fmtFull(selectedDate)}</h3>
             <div className="space-y-3">
@@ -140,8 +139,8 @@ export default function CalendarPersalinan({ persalinan }) {
               )}
 
               {isSelectedJadwal && selectedVisits.length === 0 && (
-                <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3.5 space-y-1">
-                  <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Jadwal Kunjungan Nifas Berikutnya</p>
+                <div className="rounded-xl bg-brand-50 border border-brand-100 p-3.5 space-y-1">
+                  <p className="text-xs font-bold text-brand-700 uppercase tracking-wide">Jadwal Kunjungan Nifas Berikutnya</p>
                   <p className="text-xs text-slate-500">Belum terpenuhi — segera lakukan kunjungan</p>
                 </div>
               )}
@@ -149,10 +148,10 @@ export default function CalendarPersalinan({ persalinan }) {
               {selectedVisits.map((visit) => {
                 const isTD = visit.tekananDarahSistol >= 140 || visit.tekananDarahDiastol >= 90;
                 return (
-                  <div key={String(visit._id)} className="rounded-xl bg-emerald-50 border border-emerald-100 p-3.5 space-y-2.5">
+                  <div key={String(visit._id)} className="rounded-xl bg-brand-50 border border-brand-100 p-3.5 space-y-2.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       {visit.nomorKF && (
-                        <span className="bg-emerald-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">KF{visit.nomorKF}</span>
+                        <span className="bg-brand-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">KF{visit.nomorKF}</span>
                       )}
                       {visit.hariPascaSalin != null && (
                         <span className="text-xs text-slate-500">Hari ke-{visit.hariPascaSalin}</span>
@@ -175,7 +174,7 @@ export default function CalendarPersalinan({ persalinan }) {
                     {visit.keluhan && <DetailRow label="Keluhan" value={visit.keluhan} />}
                     {visit.tindakan && <DetailRow label="Tindakan" value={visit.tindakan} />}
                     {visit.notes && <DetailRow label="Catatan" value={visit.notes} />}
-                    {isTD && <p className="text-xs text-red-600 font-semibold">⚠️ TD tinggi — perhatikan risiko hipertensi post-partum</p>}
+                    {isTD && <p className="text-xs text-red-600 font-semibold"><AlertTriangle size={13} className="inline -mt-0.5 mr-1" aria-hidden="true" />TD tinggi — perhatikan risiko hipertensi post-partum</p>}
                   </div>
                 );
               })}
@@ -194,7 +193,7 @@ export default function CalendarPersalinan({ persalinan }) {
 function Info({ label, value, highlight }) {
   return (
     <div>
-      <span className="text-[10px] text-slate-400 uppercase tracking-wide block">{label}</span>
+      <span className="text-[11px] text-slate-400 uppercase tracking-wide block">{label}</span>
       <span className={`text-sm font-semibold ${highlight ? "text-red-600" : "text-slate-800"}`}>{value}</span>
     </div>
   );
@@ -203,7 +202,7 @@ function Info({ label, value, highlight }) {
 function DetailRow({ label, value }) {
   return (
     <p className="text-xs text-slate-600">
-      <span className="text-[10px] uppercase tracking-wide text-slate-400 mr-1">{label}:</span>
+      <span className="text-[11px] uppercase tracking-wide text-slate-400 mr-1">{label}:</span>
       {value}
     </p>
   );

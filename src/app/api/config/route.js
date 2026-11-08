@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/database";
 import { Config } from "@/models/config";
-import { successResponse, paginatedResponse, errorResponse } from "@/lib/response";
+import { successResponse, paginatedResponse, errorResponse, serverError } from "@/lib/response";
+import { escapeRegex, parsePagination } from "@/lib/query";
 
 const ALLOWED_SORT_CONFIG = ["label", "code", "type", "createdAt"];
 
@@ -28,39 +29,41 @@ export async function GET(req) {
       );
     }
 
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 10;
+    const { page, limit, skip } = parsePagination(searchParams, {
+      defaultLimit: 10,
+      maxLimit: 500,
+    });
     const search = searchParams.get("search") || "";
     const rawSort = searchParams.get("sort");
     const sortField = ALLOWED_SORT_CONFIG.includes(rawSort) ? rawSort : "label";
     const includeInactive = (searchParams.get("includeInactive") || "") === "1";
-
-    const skip = (page - 1) * limit;
 
     const query = { type: type.trim() };
 
     if (!includeInactive) query.isActive = true;
 
     if (search) {
-      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escaped = escapeRegex(search);
       query.$or = [
         { label: { $regex: escaped, $options: "i" } },
         { code: { $regex: escaped, $options: "i" } },
       ];
     }
 
-    const items = await Config.find(query)
-      .sort({ [sortField]: 1 })
-      .skip(skip)
-      .limit(limit);
+    const [items, totalItems] = await Promise.all([
+      Config.find(query)
+        .sort({ [sortField]: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Config.countDocuments(query),
+    ]);
 
-    const totalItems = await Config.countDocuments(query);
     const totalPages = Math.max(1, Math.ceil(totalItems / limit));
 
-    return paginatedResponse("Data config berhasil diambil", items, page, totalPages);
+    return paginatedResponse("Data konfigurasi berhasil diambil", items, page, totalPages);
   } catch (error) {
-    console.error(error);
-    return errorResponse("Gagal mengambil data config", 500);
+    return serverError(error, "Gagal mengambil data konfigurasi");
   }
 }
 
@@ -73,12 +76,12 @@ export async function POST(req) {
     const label = String(body.label || "").trim();
 
     if (!type || !label) {
-      return errorResponse("type dan label wajib diisi", 400);
+      return errorResponse("Tipe dan label wajib diisi", 400);
     }
 
     const code = slugifyLabel(label);
     if (!code) {
-      return errorResponse("Label tidak valid setelah dinormalisasi", 400);
+      return errorResponse("Label harus mengandung huruf atau angka", 400);
     }
 
     const exists = await Config.findOne({ type, code }).select("_id").lean();
@@ -96,11 +99,11 @@ export async function POST(req) {
       isActive: body.isActive ?? true,
     });
 
-    return successResponse("Config created successfully", newItem, 201);
+    return successResponse("Konfigurasi berhasil ditambahkan", newItem, 201);
   } catch (error) {
     if (String(error?.code) === "11000") {
-      return errorResponse("Duplikat: kombinasi type+code sudah ada", 409);
+      return errorResponse("Konfigurasi dengan label yang sama sudah ada", 409);
     }
-    return errorResponse("Failed to create config", 400, error.message);
+    return serverError(error, "Gagal menambahkan konfigurasi");
   }
 }

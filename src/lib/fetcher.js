@@ -19,19 +19,22 @@ async function signOutFetcher() {
 
 export async function fetcher(url, options = {}) {
   try {
+    // options di-spread lebih dulu, lalu headers di-set terakhir.
+    // Kalau dibalik, options.headers akan menimpa hasil merge dan
+    // Content-Type default ikut hilang.
     const res = await fetch(url, {
       credentials: "include",
       cache: "no-store",
+      ...options,
       headers: {
         "Content-Type": "application/json",
         ...(options.headers || {}),
       },
-      ...options,
     });
 
     if (res.status === 401 || res.status === 403) {
       await signOutFetcher();
-      throw new Error("Unauthorized");
+      throw new Error("Sesi habis, silakan login ulang");
     }
 
     let data = null;
@@ -43,17 +46,35 @@ export async function fetcher(url, options = {}) {
     }
 
     if (!res.ok) {
-      const msg = data?.message || `Request failed (${res.status})`;
+      const msg = data?.message || `Permintaan gagal (${res.status})`;
       throw new Error(msg);
     }
 
-    if (data?.status === false) {
-      throw new Error(data?.message || "Request failed");
+    if (data?.status === "error") {
+      throw new Error(data?.message || "Permintaan gagal");
     }
 
     return data;
   } catch (error) {
-    console.error("Fetcher error:", error);
+    // Permintaan yang sengaja dibatalkan (ketikan pencarian baru) bukan galat.
+    if (error?.name !== "AbortError") console.error("Fetcher error:", error);
     throw error;
   }
+}
+
+/**
+ * Untuk unduhan berkas (Excel): penanganan sesi sama dengan fetcher(),
+ * tetapi mengembalikan Blob mentah, bukan JSON.
+ */
+export async function fetchBlob(url) {
+  const res = await fetch(url, { credentials: "include", cache: "no-store" });
+  if (res.status === 401 || res.status === 403) {
+    await signOutFetcher();
+    throw new Error("Sesi habis, silakan login ulang");
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || "Gagal mengunduh berkas");
+  }
+  return res.blob();
 }
